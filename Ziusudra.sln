@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ziusudra.Core", "Ziusudra.Core\Ziusudra.Core.csproj", "{864B527A-42F7-4F88-9C0E-479C42439ED2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ziusudra.Core.Tests", "Ziusudra.Core.Tests\Ziusudra.Core.Tests.csproj", "{1A477AB6-6078-4B03-B6CB-8006EE9AB5C7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{864B527A-42F7-4F88-9C0E-479C42439ED2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{864B527A-42F7-4F88-9C0E-479C42439ED2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{864B527A-42F7-4F88-9C0E-479C42439ED2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{864B527A-42F7-4F88-9C0E-479C42439ED2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A477AB6-6078-4B03-B6CB-8006EE9AB5C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A477AB6-6078-4B03-B6CB-8006EE9AB5C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A477AB6-6078-4B03-B6CB-8006EE9AB5C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A477AB6-6078-4B03-B6CB-8006EE9AB5C7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C7F076FA-C11D-45E6-8217-DE90A4F4F69D}
+	EndGlobalSection
+EndGlobal
