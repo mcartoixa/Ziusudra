@@ -3,24 +3,13 @@ root = true
 [*]
 indent_size = 4
 indent_style = space
+insert_final_newline = true
 tab_width = 4
 
-# Fichiers C#
+[*.{json,*proj,targets,xml}]
+indent_size = 2
+
 [*.cs]
-
-#### Options EditorConfig principales ####
-
-# Indentation et espacement
-indent_size = 4
-indent_style = space
-tab_width = 4
-
-# Préférences de nouvelle ligne
-end_of_line = crlf
-insert_final_newline = false
-
-#### Conventions de codage .NET ####
-
 # Organiser les instructions Using
 dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = true

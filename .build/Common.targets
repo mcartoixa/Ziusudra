@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Output paths -->
+  <PropertyGroup>
+    <UnitTestsSuffix Condition="'$(UnitTestsSuffix)'==''">.Tests</UnitTestsSuffix>
+
+    <InputPath>$(MSBuildProjectDirectory)</InputPath>
+    <TmpOutputPath>$(InputPath)\tmp\</TmpOutputPath>
+
+    <TmpOutBinOutputPath>$(TmpOutputPath)out\bin\</TmpOutBinOutputPath>
+    <TmpOutPdbOutputPath>$(TmpOutputPath)out\pdb\</TmpOutPdbOutputPath>
+    <AnalysisOutputPath>$(TmpOutputPath)anl\</AnalysisOutputPath>
+    <BuildOutputPath>$(TmpOutputPath)bin\</BuildOutputPath>
+    <PackageOutputPath>$(TmpOutputPath)pck\</PackageOutputPath>
+    <PublishOutputPath>$(TmpOutputPath)pub\</PublishOutputPath>
+    <TestsOutputPath>$(TmpOutputPath)tst\</TestsOutputPath>
+    <IntermediateOutputPath>$(TmpOutputPath)obj\</IntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MSDeployToolPathAvailable>False</MSDeployToolPathAvailable>
+    <MSDeployToolPathAvailable Condition="Exists('$(MSDeployToolPath)')">True</MSDeployToolPathAvailable>
+  </PropertyGroup>
+
+
+
+  <!-- The following generates dependencies on external tools on NuGet, that can be restored -->
+  <PropertyGroup>
+    <RestoreGraphProjectInput>$(MSBuildProjectFullPath)</RestoreGraphProjectInput>
+    <TargetFramework>net6.0</TargetFramework>
+    <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" /> <!-- cf. https://docs.microsoft.com/en-us/visualstudio/msbuild/how-to-use-project-sdk -->
+
+  <ItemGroup>
+    <PackageReference Include="ReportGenerator" Version="5.1.6" />
+  </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" /> <!-- cf. https://docs.microsoft.com/en-us/visualstudio/msbuild/how-to-use-project-sdk -->
+
+
+
+  <!-- Prepare -->
+  <Target Name="Prepare" DependsOnTargets="Restore">
+    <MakeDir Directories="$(TmpOutputPath)" />
+  </Target>
+
+
+
+  <!-- Clean -->
+  <Target Name="Clean" DependsOnTargets="CleanProjects;CleanTestProjects" />
+
+  <Target Name="CleanProjects">
+    <!-- Redirecting intermediates won't work, so making sure here: https://github.com/dotnet/sdk/issues/3485 -->
+    <MSBuild
+      Projects="%(Projects.Identity)"
+      RebaseOutputs="True"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);%(Projects.Properties)"
+      Targets="Restore;Clean"
+    />
+  </Target>
+
+  <Target Name="CleanTestProjects"
+    Outputs="%(TestProjects.RootDir)%(TestProjects.Directory)\obj\dummy.txt"
+    DependsOnTargets="_GetTestProjects"
+  >
+    <!-- Redirecting intermediates won't work, so making sure here: https://github.com/dotnet/sdk/issues/3485 -->
+    <MSBuild
+      Projects="%(TestProjects.Identity)"
+      RebaseOutputs="True"
+      Properties="Configuration=Release"
+      Targets="Restore;Clean"
+    />
+  </Target>
+
+
+
+  <!-- Compile -->
+  <Target Name="Compile" DependsOnTargets="Prepare;CompileProject" />
+
+  <Target Name="CompileProject">
+    <PropertyGroup>
+      <_BaseOutputPath>$(BuildOutputPath)%(Projects.FileName)\</_BaseOutputPath>
+      <_BaseIntermediateOutputPath>$(IntermediateOutputPath)bin\%(Projects.FileName)\</_BaseIntermediateOutputPath>
+    </PropertyGroup>
+    <MSBuild
+      Projects="%(Projects.Identity)"
+      RebaseOutputs="True"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);BaseOutputPath=$(_BaseOutputPath);BaseIntermediateOutputPath=$(_BaseIntermediateOutputPath);%(Projects.Properties)"
+      Targets="Restore;Build"
+    />
+  </Target>
+
+
+
+  <!-- Test -->
+  <Target Name="Test" DependsOnTargets="Prepare;TestProject;GenerateTestReports" />
+
+  <Target Name="_GetTestProjects"
+    Returns="@(TestProjects)"
+    BeforeTargets="TestProject"
+  >
+    <ItemGroup>
+      <TestProjects Include="$(InputPath)\**\*$(UnitTestsSuffix).csproj" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_GetCoverageResults"
+    Returns="@(CoverageResults)"
+    BeforeTargets="GenerateTestReports"
+  >
+    <ItemGroup>
+      <CoverageResults Include="$(TestsOutputPath)results\**\coverage.cobertura.xml" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="TestProject"
+    Outputs="$(TestsOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
+    DependsOnTargets="_GetTestProjects"
+  >
+    <!--  Using solutions for unit tests won't work: https://github.com/Microsoft/vstest/issues/411
+          Redirecting intermediates won't work either: https://github.com/dotnet/sdk/issues/3485 -->
+    <ItemGroup>
+      <_VsTestLoggers Include="xunit" /> <!-- Don't forget to reference XunitXml.TestLogger in the test projects... -->
+      <_VsTestLoggers Condition="'$(VSTEST_LOGGER)' != ''" Include="$(VSTEST_LOGGER)" />
+      <_VsTestTestAdapterPaths Include="$(InputPath)" />
+      <_VsTestTestAdapterPaths Condition="'$(VSTEST_TESTADAPTERPATH)' != ''" Include="$(VSTEST_TESTADAPTERPATH)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_BaseOutputPath>$(TestsOutputPath)bin\%(TestProjects.Filename)\</_BaseOutputPath>
+      <_BaseIntermediateOutputPath>$(IntermediateOutputPath)tst\%(TestProjects.Filename)\</_BaseIntermediateOutputPath>
+      <_VSTestResultsPath>$(TestsOutputPath)results\%(TestProjects.Filename)\</_VSTestResultsPath>
+      <_VsTestLogger>@(_VsTestLoggers->'%(Identity)')</_VsTestLogger>
+      <_VsTestTestAdapterPath>@(_VsTestTestAdapterPaths->'%(Identity)')</_VsTestTestAdapterPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_TestProperties Include="IsTestProject=True" />
+      <_TestProperties Include="VSTestNoLogo=True" />
+      <_TestProperties Include="VSTestNoBuild=False" />
+      <_TestProperties Include="VSTestBlame=True" />
+      <_TestProperties Include="VSTestVerbosity=normal" />
+      <_TestProperties Include="VSTestResultsDirectory=$(_VSTestResultsPath)" />
+      <_TestProperties Include="VSTestTestAdapterPath=$(_VsTestTestAdapterPath)" />
+      <_TestProperties Include="VSTestCollect=XPlat Code Coverage" />
+      <_TestProperties Include="VSTestLogger=$(_VsTestLogger)" />
+      <_TestProperties Condition="Exists('$(InputPath)\$(MSBuildProjectName)$(UnitTestsSuffix).runsettings')" Include="VSTestSetting=$(InputPath)\$(MSBuildProjectName)$(UnitTestsSuffix).runsettings" />
+    </ItemGroup>
+
+    <RemoveDir Directories="$(_VSTestResultsPath)" />
+    <MSBuild
+      Projects="%(TestProjects.Identity)"
+      RebaseOutputs="True"
+      Properties="Configuration=Release;BaseOutputPath=$(_BaseOutputPath);@(_TestProperties)"
+      Targets="Restore;VSTest"
+    />
+    <Copy Condition="Exists('$(_VSTestResultsPath)TestResults.xml')" SourceFiles="$(_VSTestResultsPath)TestResults.xml" DestinationFiles="$(TmpOutputPath)%(TestProjects.Filename)-xunit-results.xml" />
+  </Target>
+
+  <!-- Split the target in 2 so that the condition can be evaluated -->
+  <Target Name="GenerateTestReports" DependsOnTargets="TestProject;_GetCoverageResults" />
+  <Target Name="_GenerateTestReports"
+    Condition="'@(CoverageResults)' != ''"
+    AfterTargets="GenerateTestReports"
+  >
+    <ReportGenerator ReportFiles="@(CoverageResults)" TargetDirectory="$(TestsOutputPath)" ReportTypes="HtmlInline;Cobertura" VerbosityLevel="Info" />
+    <Move SourceFiles="$(TestsOutputPath)Cobertura.xml" DestinationFiles="$(TmpOutputPath)$(MSBuildProjectName)-cobertura-results.xml" />
+
+    <XmlPeek XmlInputPath="$(TmpOutputPath)$(MSBuildProjectName)-cobertura-results.xml" Query="/coverage/@line-rate">
+      <Output TaskParameter="Result" ItemName="CoverageLineRate" />
+    </XmlPeek>
+    <Message Importance="High" Text="Line coverage: @(CoverageLineRate)" />
+  </Target>
+
+
+
+  <!-- Analysis -->
+  <Target Name="Analyze" DependsOnTargets="Prepare;CountLoc" />
+
+  <Target Name="CountLoc">
+    <PropertyGroup>
+      <ClocResultsFile>$(TmpOutputPath)cloc-results.xml</ClocResultsFile>
+      <_ClocCommand Condition="'$(OS)'=='Windows_NT'">&quot;$(InputPath)\.tmp\cloc.exe&quot;</_ClocCommand>
+      <_ClocCommand Condition="'$(_ClocCommand)'==''">perl &quot;$(InputPath)/.tmp/cloc.pl&quot;</_ClocCommand>
+    </PropertyGroup>
+    <Exec
+      Command="$(_ClocCommand) &quot;$(InputPath)&quot; --exclude-dir=.tmp,.vs,.vscode,bin,build,doc,lib,obj,tmp,GeneratedCode --exclude-ext=csproj,dbmdl,proj,sln,sqlproj,suo,user --3 --quiet --progress-rate=0 --xml --report_file=&quot;$(ClocResultsFile)&quot;"
+      WorkingDirectory="$(InputPath)"
+      YieldDuringToolExecution="True"
+      IgnoreExitCode="True"
+    />
+  </Target>
+
+
+
+  <!-- Package -->
+  <Target Name="Package" DependsOnTargets="Prepare;PackageProject" />
+
+  <Target Name="PackageProject">
+    <PropertyGroup>
+      <_BaseOutputPath>$(PackageOutputPath)%(Projects.FileName)\</_BaseOutputPath>
+      <_BaseIntermediateOutputPath>$(IntermediateOutputPath)bin\%(Projects.FileName)\</_BaseIntermediateOutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_PackageProperties Include="PackageOutputPath=$(TmpOutBinOutputPath)" />
+    </ItemGroup>
+    <MSBuild
+      Projects="%(Projects.Identity)"
+      RebaseOutputs="True"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);BaseOutputPath=$(_BaseOutputPath);BaseIntermediateOutputPath=$(_BaseIntermediateOutputPath);@(_PackageProperties);%(Projects.Properties)"
+      Targets="Restore;Pack"
+    />
+  </Target>
+
+
+
+  <!-- Build -->
+  <Target Name="Build" DependsOnTargets="Compile;Test;Analyze" />
+  <!-- Rebuild -->
+  <Target Name="Rebuild" DependsOnTargets="Clean;Build" />
+  <!-- Release -->
+  <Target Name="Release" DependsOnTargets="Rebuild;Package" />
+</Project>

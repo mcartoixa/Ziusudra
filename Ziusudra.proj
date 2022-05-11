@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Rebuild" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Projects -->
+  <ItemDefinitionGroup>
+    <Projects>
+      <Configuration>Release</Configuration>
+      <Platform>Any CPU</Platform>
+    </Projects>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <Projects Include="Ziusudra.sln">
+      <!-- cf. https://github.com/dotnet/sdk/issues/3485 -->
+      <Properties>DefaultItemExcludesInProjectFolder=obj/**</Properties>
+    </Projects>
+  </ItemGroup>
+
+  <Import Project="$(MSBuildProjectDirectory)\.build\Common.targets" />
+
+  <!-- Custom version -->
+  <Target
+    Name="UpdateVersion"
+    Condition="'$(PACKAGE_VERSION)'!=''"
+  >
+    <ItemGroup>
+      <PackagedItems Include="$(InputPath)\*\*.csproj" />
+    </ItemGroup>
+    <XmlPoke
+      XmlInputPath="%(PackagedItems.Identity)"
+      Query="/Project/PropertyGroup/Version"
+      Value="$(PACKAGE_VERSION)"
+    />
+  </Target>
+</Project>
