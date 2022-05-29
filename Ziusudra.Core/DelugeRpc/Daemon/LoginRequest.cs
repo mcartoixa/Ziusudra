@@ -20,7 +20,7 @@ namespace Ziusudra.DelugeRpc.Daemon
             { }
 
             /// <summary>Gets the result of the login operation.</summary>
-            public int Result => Convert.ToInt32(Values[2]);
+            public int AuthenticationLevel => Convert.ToInt32(Values[2]);
         }
 
         /// <summary>Create a new instance of the <see cref="LoginRequest" /> type.</summary>

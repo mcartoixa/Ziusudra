@@ -53,7 +53,7 @@ namespace Ziusudra.Rencode
                     return encoder.WriteValueAsync(this, value, cancellationToken);
 
             throw new RencodeException(
-                string.Format(CultureInfo.CurrentCulture, SR.RencodeException_NoEncoderFound, value, value?.GetType().Name)
+                string.Format(CultureInfo.CurrentCulture, SR.RencodeException_NoEncoderFoundToWrite, value, value?.GetType().Name)
             );
         }
 

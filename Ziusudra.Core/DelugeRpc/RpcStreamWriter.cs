@@ -1,4 +1,6 @@
 ﻿using System.IO.Compression;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ziusudra.DelugeRpc
 {
@@ -53,6 +55,7 @@ namespace Ziusudra.DelugeRpc
             {
                 using var writer = new Rencode.RencodeStreamWriter(contentStream, true);
                 await writer.WriteValueAsync(request.ToValueCollection(), cancellationToken);
+                Logger.LogTrace("Deluge RPC message written: {0}", request.ToDebugString());
             }
 
             // Now write the length in the header
@@ -81,8 +84,22 @@ namespace Ziusudra.DelugeRpc
             GC.SuppressFinalize(this);
         }
 
-        private readonly Stream _Stream;
+        /// <summary>Get or set the current logger.</summary>
+        public ILogger Logger
+        {
+            get
+            {
+                return _Logger;
+            }
+            set
+            {
+                _Logger = value;
+            }
+        }
+
         private readonly bool _LeaveOpen;
+        private ILogger _Logger = NullLogger.Instance;
+        private readonly Stream _Stream;
 
         private const byte PROTOCOL_VERSION = 1;
     }

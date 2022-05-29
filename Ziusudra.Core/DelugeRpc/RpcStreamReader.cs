@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Compression;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ziusudra.DelugeRpc
 {
@@ -45,29 +48,32 @@ namespace Ziusudra.DelugeRpc
         {
             byte protocol = (await ReadBytesFromStreamAsync(1, cancellationToken).ConfigureAwait(false))[0];
 
-            byte[] buffer = await ReadBytesFromStreamAsync(4, cancellationToken).ConfigureAwait(false);
+            byte[] buffer = await ReadBytesFromStreamAsync(4, cancellationToken)
+                .ConfigureAwait(false);
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(buffer);
             uint size = BitConverter.ToUInt32(buffer);
 
             using (var reader = new Rencode.RencodeStreamReader(new ZLibStream(_Stream, CompressionMode.Decompress, true), true))
             {
-                var value = await reader.ReadValueAsync(cancellationToken).ConfigureAwait(false);
+                var content = await reader.ReadValueAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                Logger.LogTrace("Deluge RPC message read: {0}", MessageExtensions.ToDebugString(content));
                 // TODO: check that size was accurate?
 
-                if (value is not ICollection collection)
-                    throw new RpcException("A collection was expected");
-                RpcMessageType type = (RpcMessageType)Convert.ToInt32(collection.Cast<object?>().FirstOrDefault());
+                if (content is not ICollection values)
+                    throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_CollectionWasExpected, content?.GetType().ToString() ?? "<null>"));
+                RpcMessageType type = (RpcMessageType)Convert.ToInt32(values.Cast<object?>().FirstOrDefault());
                 switch (type)
                 {
                     case RpcMessageType.RPC_EVENT:
-                        return new RpcEvent(collection);
+                        return RpcEvent.CreateFromValues(values);
                     case RpcMessageType.RPC_ERROR:
-                        return new RpcServerException(collection);
+                        return new RpcServerException(values);
                     case RpcMessageType.RPC_RESPONSE:
-                        return new RpcResponse(collection);
+                        return new RpcResponse(values);
                 }
-                throw new RpcException("Unrecognized message");
+                throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_InvalidMessageType, type));
             }
         }
 
@@ -97,7 +103,21 @@ namespace Ziusudra.DelugeRpc
             GC.SuppressFinalize(this);
         }
 
-        private readonly Stream _Stream;
+        /// <summary>Get or set the current logger.</summary>
+        public ILogger Logger
+        {
+            get
+            {
+                return _Logger;
+            }
+            set
+            {
+                _Logger = value;
+            }
+        }
+
         private readonly bool _LeaveOpen;
+        private ILogger _Logger = NullLogger.Instance;
+        private readonly Stream _Stream;
     }
 }

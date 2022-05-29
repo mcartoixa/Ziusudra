@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <BuildInputPath Condition="'$(BuildInputPath)' == ''">$(MSBuildThisFileDirectory)..\</BuildInputPath>
+    <BaseBuildOutputPath>$(BuildInputPath)tmp\</BaseBuildOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BuildAnalyzeIntermediateOutputPath>$(BaseBuildOutputPath)analyze\</BuildAnalyzeIntermediateOutputPath>
+    <BuildCompileIntermediateOutputPath>$(BaseBuildOutputPath)bin\</BuildCompileIntermediateOutputPath>
+    <BuildPackageIntermediateOutputPath>$(BaseBuildOutputPath)pack\</BuildPackageIntermediateOutputPath>
+    <BuildPublishIntermediateOutputPath>$(BaseBuildOutputPath)pub\</BuildPublishIntermediateOutputPath>
+    <BuildTestIntermediateOutputPath>$(BaseBuildOutputPath)test\</BuildTestIntermediateOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BaseBuildArtefactsOutputPath>$(BaseBuildOutputPath)out\</BaseBuildArtefactsOutputPath>
+    <BuildBinaryArtefactsOutputPath>$(BaseBuildArtefactsOutputPath)bin\</BuildBinaryArtefactsOutputPath>
+    <BuildDebugArtefactsOutputPath>$(BaseBuildArtefactsOutputPath)pdb\</BuildDebugArtefactsOutputPath>
+  </PropertyGroup>
+</Project>

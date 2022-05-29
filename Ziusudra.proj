@@ -10,10 +10,9 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <Projects Include="Ziusudra.sln">
-      <!-- cf. https://github.com/dotnet/sdk/issues/3485 -->
-      <Properties>DefaultItemExcludesInProjectFolder=obj/**</Properties>
-    </Projects>
+    <!--Projects Include="Ziusudra.sln" /-->
+    <Projects Include="Ziusudra.Core\Ziusudra.Core.csproj" />
+    <Projects Include="Ziusudra.Desktop\Ziusudra.Desktop.csproj" />
   </ItemGroup>
 
   <Import Project="$(MSBuildProjectDirectory)\.build\Common.targets" />

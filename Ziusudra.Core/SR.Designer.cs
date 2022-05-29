@@ -88,11 +88,83 @@ namespace Ziusudra {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à No encoder could be found for the value {0} of type {1}.
+        ///   Recherche une chaîne localisée semblable à No encoder could be found to read the value with header 0x{0:X}.
         /// </summary>
-        internal static string RencodeException_NoEncoderFound {
+        internal static string RencodeException_NoEncoderFoundToRead {
             get {
-                return ResourceManager.GetString("RencodeException_NoEncoderFound", resourceCulture);
+                return ResourceManager.GetString("RencodeException_NoEncoderFoundToRead", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No encoder could be found to write the value {0} of type {1}.
+        /// </summary>
+        internal static string RencodeException_NoEncoderFoundToWrite {
+            get {
+                return ResourceManager.GetString("RencodeException_NoEncoderFoundToWrite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à A value was expected but non was found.
+        /// </summary>
+        internal static string RencodeException_ValueWasExpected {
+            get {
+                return ResourceManager.GetString("RencodeException_ValueWasExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The client should be started before using it.
+        /// </summary>
+        internal static string RpcClient_ClientNotStarted {
+            get {
+                return ResourceManager.GetString("RpcClient_ClientNotStarted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The client could not be set up to wait for a response for this request.
+        /// </summary>
+        internal static string RpcClient_CouldNotWaitForAResponse {
+            get {
+                return ResourceManager.GetString("RpcClient_CouldNotWaitForAResponse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à One or more of the specified types does not represent a proper RPC event.
+        /// </summary>
+        internal static string RpcEvent_OneTypeIsNotTypedEvent {
+            get {
+                return ResourceManager.GetString("RpcEvent_OneTypeIsNotTypedEvent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The type {0} does not represent a proper RPC event.
+        /// </summary>
+        internal static string RpcEvent_TypeIsNotTypedEvent {
+            get {
+                return ResourceManager.GetString("RpcEvent_TypeIsNotTypedEvent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à An ICollection was expected but a {0} was found.
+        /// </summary>
+        internal static string RpcException_CollectionWasExpected {
+            get {
+                return ResourceManager.GetString("RpcException_CollectionWasExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The message type {0} is not a proper RPC message type.
+        /// </summary>
+        internal static string RpcException_InvalidMessageType {
+            get {
+                return ResourceManager.GetString("RpcException_InvalidMessageType", resourceCulture);
             }
         }
     }

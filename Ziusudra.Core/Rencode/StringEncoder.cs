@@ -22,7 +22,7 @@ namespace Ziusudra.Rencode
         protected async override ValueTask<string> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
         {
             int stringLength;
-            if (header <= FIXED_START)
+            if (header < FIXED_START)
             {
                 // Length is prefixed as a string terminated by ':'
                 char current = (char)header;
@@ -37,37 +37,40 @@ namespace Ziusudra.Rencode
             {
                 stringLength = header - FIXED_START;
             }
+            if (stringLength == 0)
+                return string.Empty;
 
-            byte[] buffer = await reader.ReadAsync(stringLength, cancellationToken).ConfigureAwait(false);
+            byte[] buffer = await reader.ReadAsync(stringLength, cancellationToken)
+                .ConfigureAwait(false);
             using var ms = new MemoryStream(buffer, false);
             using (var sr = new StreamReader(ms, Encoding.UTF8))
             {
                 char[] sb = new char[stringLength];
                 int read = sr.Read(sb);
-                Debug.Assert(read == buffer.Length);
-                if (read != buffer.Length)
-                    throw new RencodeException(SR.RencodeException_EmptyStream);
-
-                return new string(sb);
+                return new string(sb, 0, read);
             }
         }
 
         /// <inheritdoc />
         protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, string value, CancellationToken cancellationToken)
         {
+            byte[] content = Encoding.UTF8.GetBytes(value);
+
             byte[] header = value.Length < FIXED_COUNT ?
                 new byte[] { (byte)(FIXED_START + value.Length) } :
                 Encoding.ASCII.GetBytes(
                     string.Format(
                         CultureInfo.InvariantCulture,
                         "{0:D}:",
-                        value.Length
+                        content.Length
                     )
                 );
-            await writer.WriteAsync(header, cancellationToken).ConfigureAwait(false);
+            await writer.WriteAsync(header, cancellationToken)
+                .ConfigureAwait(false);
 
-            byte[] content = Encoding.UTF8.GetBytes(value);
-            await writer.WriteAsync(content, cancellationToken).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(value))
+                await writer.WriteAsync(content, cancellationToken)
+                    .ConfigureAwait(false);
         }
 
         internal static readonly StringEncoder Instance = new();

@@ -16,18 +16,6 @@ namespace Ziusudra.DelugeRpc
         public RpcRequest()
         { }
 
-        ICollection IMessage.ToValueCollection()
-        {
-            var args = new ArrayList();
-            args.AddRange(new object[] { Id, Method, GetArgs() });
-            var kwargs = ((IClientRequest)this).GetKeywordArgs();
-            args.Add(kwargs ?? new Dictionary<string, object>());
-
-            var ret = new ArrayList();
-            ret.Add(args);
-            return ret;
-        }
-
         /// <summary>Create the typed response to the current request from the specified server <paramref name="reply" />.</summary>
         /// <param name="reply">The reply to create the response from.</param>
         /// <returns>The response to the current request.</returns>
@@ -49,8 +37,6 @@ namespace Ziusudra.DelugeRpc
             return CreateResponse(new RpcResponse(values));
         }
 
-        ICollection IClientRequest.GetArgs() => GetArgs();
-
         IDictionary IClientRequest.GetKeywordArgs()
         {
             var args = GetKeywordArgs();
@@ -62,6 +48,20 @@ namespace Ziusudra.DelugeRpc
             }
             return d;
         }
+
+        ICollection IMessage.ToValueCollection()
+        {
+            var args = new ArrayList();
+            args.AddRange(new object[] { Id, Method, GetArgs() });
+            var kwargs = ((IClientRequest)this).GetKeywordArgs();
+            args.Add(kwargs ?? new Dictionary<string, object>());
+
+            var ret = new ArrayList();
+            ret.Add(args);
+            return ret;
+        }
+
+        ICollection IClientRequest.GetArgs() => GetArgs();
 
         /// <summary>Gets the identifier of the request.</summary>
         /// <remarks>Every new instance will have a different identifier,

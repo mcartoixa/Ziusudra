@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 
 namespace Ziusudra.Rencode
 {
@@ -57,20 +58,30 @@ namespace Ziusudra.Rencode
             byte header = (await ReadAsync(1, cancellationToken).ConfigureAwait(false))[0];
             foreach (var encoder in encoders)
                 if (encoder.CanRead(header))
-                    return await encoder.ReadValueAsync(this, header, cancellationToken).ConfigureAwait(false);
+                    return await encoder.ReadValueAsync(this, header, cancellationToken)
+                        .ConfigureAwait(false);
 
-            throw new RencodeException("Invalid data");
+            throw new RencodeException(
+                string.Format(CultureInfo.CurrentCulture, SR.RencodeException_NoEncoderFoundToRead, header)
+            );
         }
 
         internal async ValueTask<byte[]> ReadAsync(int length, CancellationToken cancellationToken)
         {
-            byte[] buffer = new byte[length];
-            int read = await _Stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-            Debug.Assert(read == buffer.Length);
-            if (read != buffer.Length)
+            byte[] ret = new byte[length];
+
+            int read = 0;
+            while (read < length)
+            {
+                Memory<byte> buffer = new(ret, read, length - read);
+                read += await _Stream.ReadAsync(buffer, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            Debug.Assert(read == ret.Length);
+            if (read != ret.Length)
                 throw new RencodeException(SR.RencodeException_EmptyStream);
 
-            return buffer;
+            return ret;
         }
 
         void IDisposable.Dispose()

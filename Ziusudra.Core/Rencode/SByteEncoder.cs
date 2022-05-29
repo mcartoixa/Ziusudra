@@ -23,7 +23,7 @@
             } else if (header >= POS_FIXED_START && header < POS_FIXED_START + POS_FIXED_COUNT)
             {
                 return (sbyte)((sbyte)header - POS_FIXED_START);
-            } else if (header >= NEG_FIXED_START - NEG_FIXED_COUNT && header < NEG_FIXED_START)
+            } else if (header >= NEG_FIXED_START && header < NEG_FIXED_START + NEG_FIXED_COUNT)
             {
                 return (sbyte)((sbyte)header + NEG_FIXED_START);
             }

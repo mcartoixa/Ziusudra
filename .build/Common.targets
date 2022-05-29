@@ -3,21 +3,13 @@
 
   <!-- Output paths -->
   <PropertyGroup>
+    <BuildInputPath>$(MSBuildProjectDirectory)\</BuildInputPath>
+    <DirectoryBuildPropsPath>$(MSBuildThisFileDirectory)Directory.Build.props</DirectoryBuildPropsPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <UnitTestsSuffix Condition="'$(UnitTestsSuffix)'==''">.Tests</UnitTestsSuffix>
 
-    <InputPath>$(MSBuildProjectDirectory)</InputPath>
-    <TmpOutputPath>$(InputPath)\tmp\</TmpOutputPath>
-
-    <TmpOutBinOutputPath>$(TmpOutputPath)out\bin\</TmpOutBinOutputPath>
-    <TmpOutPdbOutputPath>$(TmpOutputPath)out\pdb\</TmpOutPdbOutputPath>
-    <AnalysisOutputPath>$(TmpOutputPath)anl\</AnalysisOutputPath>
-    <BuildOutputPath>$(TmpOutputPath)bin\</BuildOutputPath>
-    <PackageOutputPath>$(TmpOutputPath)pck\</PackageOutputPath>
-    <PublishOutputPath>$(TmpOutputPath)pub\</PublishOutputPath>
-    <TestsOutputPath>$(TmpOutputPath)tst\</TestsOutputPath>
-    <IntermediateOutputPath>$(TmpOutputPath)obj\</IntermediateOutputPath>
-  </PropertyGroup>
-  <PropertyGroup>
     <MSDeployToolPathAvailable>False</MSDeployToolPathAvailable>
     <MSDeployToolPathAvailable Condition="Exists('$(MSDeployToolPath)')">True</MSDeployToolPathAvailable>
   </PropertyGroup>
@@ -28,7 +20,6 @@
   <PropertyGroup>
     <RestoreGraphProjectInput>$(MSBuildProjectFullPath)</RestoreGraphProjectInput>
     <TargetFramework>net6.0</TargetFramework>
-    <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
   </PropertyGroup>
 
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" /> <!-- cf. https://docs.microsoft.com/en-us/visualstudio/msbuild/how-to-use-project-sdk -->
@@ -43,21 +34,23 @@
 
   <!-- Prepare -->
   <Target Name="Prepare" DependsOnTargets="Restore">
-    <MakeDir Directories="$(TmpOutputPath)" />
+    <MakeDir Directories="$(BaseBuildOutputPath)" />
   </Target>
 
 
 
   <!-- Clean -->
-  <Target Name="Clean" DependsOnTargets="CleanProjects;CleanTestProjects" />
+  <Target Name="Clean">
+    <RemoveDir Directories="$(BaseBuildOutputPath)" />
+  </Target>
 
   <Target Name="CleanProjects">
-    <!-- Redirecting intermediates won't work, so making sure here: https://github.com/dotnet/sdk/issues/3485 -->
+    <!-- Redirecting intermediates won't work, so trying to make sure here: https://github.com/dotnet/sdk/issues/3485 -->
     <MSBuild
       Projects="%(Projects.Identity)"
       RebaseOutputs="True"
       Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);%(Projects.Properties)"
-      Targets="Restore;Clean"
+      Targets="Clean"
     />
   </Target>
 
@@ -65,12 +58,12 @@
     Outputs="%(TestProjects.RootDir)%(TestProjects.Directory)\obj\dummy.txt"
     DependsOnTargets="_GetTestProjects"
   >
-    <!-- Redirecting intermediates won't work, so making sure here: https://github.com/dotnet/sdk/issues/3485 -->
+    <!-- Redirecting intermediates won't work, so trying to make sure here: https://github.com/dotnet/sdk/issues/3485 -->
     <MSBuild
       Projects="%(TestProjects.Identity)"
       RebaseOutputs="True"
       Properties="Configuration=Release"
-      Targets="Restore;Clean"
+      Targets="Clean"
     />
   </Target>
 
@@ -80,14 +73,10 @@
   <Target Name="Compile" DependsOnTargets="Prepare;CompileProject" />
 
   <Target Name="CompileProject">
-    <PropertyGroup>
-      <_BaseOutputPath>$(BuildOutputPath)%(Projects.FileName)\</_BaseOutputPath>
-      <_BaseIntermediateOutputPath>$(IntermediateOutputPath)bin\%(Projects.FileName)\</_BaseIntermediateOutputPath>
-    </PropertyGroup>
     <MSBuild
       Projects="%(Projects.Identity)"
       RebaseOutputs="True"
-      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);BaseOutputPath=$(_BaseOutputPath);BaseIntermediateOutputPath=$(_BaseIntermediateOutputPath);%(Projects.Properties)"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);DirectoryBuildPropsPath=$(DirectoryBuildPropsPath);%(Projects.Properties)"
       Targets="Restore;Build"
     />
   </Target>
@@ -102,7 +91,7 @@
     BeforeTargets="TestProject"
   >
     <ItemGroup>
-      <TestProjects Include="$(InputPath)\**\*$(UnitTestsSuffix).csproj" />
+      <TestProjects Include="$(BuildInputPath)**\*$(UnitTestsSuffix).csproj" Exclude="$(BaseBuildOutputPath)**\*.*" />
     </ItemGroup>
   </Target>
 
@@ -111,12 +100,12 @@
     BeforeTargets="GenerateTestReports"
   >
     <ItemGroup>
-      <CoverageResults Include="$(TestsOutputPath)results\**\coverage.cobertura.xml" />
+      <CoverageResults Include="$(BuildTestIntermediateOutputPath)results\**\coverage.cobertura.xml" />
     </ItemGroup>
   </Target>
 
   <Target Name="TestProject"
-    Outputs="$(TestsOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
+    Outputs="$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
     DependsOnTargets="_GetTestProjects"
   >
     <!--  Using solutions for unit tests won't work: https://github.com/Microsoft/vstest/issues/411
@@ -124,13 +113,11 @@
     <ItemGroup>
       <_VsTestLoggers Include="xunit" /> <!-- Don't forget to reference XunitXml.TestLogger in the test projects... -->
       <_VsTestLoggers Condition="'$(VSTEST_LOGGER)' != ''" Include="$(VSTEST_LOGGER)" />
-      <_VsTestTestAdapterPaths Include="$(InputPath)" />
+      <_VsTestTestAdapterPaths Include="$(BuildInputPath)" />
       <_VsTestTestAdapterPaths Condition="'$(VSTEST_TESTADAPTERPATH)' != ''" Include="$(VSTEST_TESTADAPTERPATH)" />
     </ItemGroup>
     <PropertyGroup>
-      <_BaseOutputPath>$(TestsOutputPath)bin\%(TestProjects.Filename)\</_BaseOutputPath>
-      <_BaseIntermediateOutputPath>$(IntermediateOutputPath)tst\%(TestProjects.Filename)\</_BaseIntermediateOutputPath>
-      <_VSTestResultsPath>$(TestsOutputPath)results\%(TestProjects.Filename)\</_VSTestResultsPath>
+      <_VSTestResultsPath>$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\</_VSTestResultsPath>
       <_VsTestLogger>@(_VsTestLoggers->'%(Identity)')</_VsTestLogger>
       <_VsTestTestAdapterPath>@(_VsTestTestAdapterPaths->'%(Identity)')</_VsTestTestAdapterPath>
     </PropertyGroup>
@@ -144,18 +131,30 @@
       <_TestProperties Include="VSTestTestAdapterPath=$(_VsTestTestAdapterPath)" />
       <_TestProperties Include="VSTestCollect=XPlat Code Coverage" />
       <_TestProperties Include="VSTestLogger=$(_VsTestLogger)" />
-      <_TestProperties Condition="Exists('$(InputPath)\$(MSBuildProjectName)$(UnitTestsSuffix).runsettings')" Include="VSTestSetting=$(InputPath)\$(MSBuildProjectName)$(UnitTestsSuffix).runsettings" />
+      <_TestProperties Condition="Exists('$(BuildInputPath)$(MSBuildProjectName)$(UnitTestsSuffix).runsettings')" Include="VSTestSetting=$(BuildInputPath)$(MSBuildProjectName)$(UnitTestsSuffix).runsettings" />
     </ItemGroup>
 
     <RemoveDir Directories="$(_VSTestResultsPath)" />
     <MSBuild
       Projects="%(TestProjects.Identity)"
       RebaseOutputs="True"
-      Properties="Configuration=Release;BaseOutputPath=$(_BaseOutputPath);@(_TestProperties)"
+      Properties="Configuration=Release;DirectoryBuildPropsPath=$(DirectoryBuildPropsPath);@(_TestProperties)"
       Targets="Restore;VSTest"
     />
-    <Copy Condition="Exists('$(_VSTestResultsPath)TestResults.xml')" SourceFiles="$(_VSTestResultsPath)TestResults.xml" DestinationFiles="$(TmpOutputPath)%(TestProjects.Filename)-xunit-results.xml" />
+    <OnError ExecuteTargets="_CopyTestResults" />
   </Target>
+
+  <Target Name="_CopyTestResults"
+    Outputs="$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
+    AfterTargets="TestProject"
+  >
+    <Copy
+      Condition="Exists('$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml')"
+      SourceFiles="$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
+      DestinationFiles="$(BaseBuildOutputPath)%(TestProjects.Filename)-xunit-results.xml"
+    />
+  </Target>
+ 
 
   <!-- Split the target in 2 so that the condition can be evaluated -->
   <Target Name="GenerateTestReports" DependsOnTargets="TestProject;_GetCoverageResults" />
@@ -163,10 +162,10 @@
     Condition="'@(CoverageResults)' != ''"
     AfterTargets="GenerateTestReports"
   >
-    <ReportGenerator ReportFiles="@(CoverageResults)" TargetDirectory="$(TestsOutputPath)" ReportTypes="HtmlInline;Cobertura" VerbosityLevel="Info" />
-    <Move SourceFiles="$(TestsOutputPath)Cobertura.xml" DestinationFiles="$(TmpOutputPath)$(MSBuildProjectName)-cobertura-results.xml" />
+    <ReportGenerator ReportFiles="@(CoverageResults)" TargetDirectory="$(BaseBuildOutputPath)" ReportTypes="HtmlInline;Cobertura" VerbosityLevel="Info" />
+    <Move SourceFiles="$(BaseBuildOutputPath)Cobertura.xml" DestinationFiles="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results.xml" />
 
-    <XmlPeek XmlInputPath="$(TmpOutputPath)$(MSBuildProjectName)-cobertura-results.xml" Query="/coverage/@line-rate">
+    <XmlPeek XmlInputPath="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results.xml" Query="/coverage/@line-rate">
       <Output TaskParameter="Result" ItemName="CoverageLineRate" />
     </XmlPeek>
     <Message Importance="High" Text="Line coverage: @(CoverageLineRate)" />
@@ -197,17 +196,10 @@
   <Target Name="Package" DependsOnTargets="Prepare;PackageProject" />
 
   <Target Name="PackageProject">
-    <PropertyGroup>
-      <_BaseOutputPath>$(PackageOutputPath)%(Projects.FileName)\</_BaseOutputPath>
-      <_BaseIntermediateOutputPath>$(IntermediateOutputPath)bin\%(Projects.FileName)\</_BaseIntermediateOutputPath>
-    </PropertyGroup>
-    <ItemGroup>
-      <_PackageProperties Include="PackageOutputPath=$(TmpOutBinOutputPath)" />
-    </ItemGroup>
     <MSBuild
       Projects="%(Projects.Identity)"
       RebaseOutputs="True"
-      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);BaseOutputPath=$(_BaseOutputPath);BaseIntermediateOutputPath=$(_BaseIntermediateOutputPath);@(_PackageProperties);%(Projects.Properties)"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);DirectoryBuildPropsPath=$(DirectoryBuildPropsPath);%(Projects.Properties)"
       Targets="Restore;Pack"
     />
   </Target>

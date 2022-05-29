@@ -32,25 +32,30 @@ namespace Ziusudra.Rencode
             {
                 for (int i = 0; i < header - FIXED_START; i++)
                 {
-                    var key = await reader.ReadValueAsync(cancellationToken).ConfigureAwait(false);
+                    object? key = await reader.ReadValueAsync(cancellationToken)
+                        .ConfigureAwait(false);
                     if (key == null)
-                        throw new RencodeException("Invalid data");
-                    var value = await reader.ReadValueAsync(cancellationToken).ConfigureAwait(false);
+                        throw new RencodeException(SR.RencodeException_ValueWasExpected);
+                    object? value = await reader.ReadValueAsync(cancellationToken)
+                        .ConfigureAwait(false);
                     ret.Add(key, value);
                 }
             } else if (header == CHR_DICT)
             {
-                object? key = await reader.ReadValueAsync(cancellationToken, _TermEncoder).ConfigureAwait(false);
+                object? key = await reader.ReadValueAsync(cancellationToken, _TermEncoder)
+                    .ConfigureAwait(false);
                 if (key == null)
-                    throw new RencodeException("Invalid data");
+                    throw new RencodeException(SR.RencodeException_ValueWasExpected);
                 while (key is not byte b || b != CHR_TERM)
                 {
-                    var value = await reader.ReadValueAsync(cancellationToken).ConfigureAwait(false);
+                    object? value = await reader.ReadValueAsync(cancellationToken)
+                        .ConfigureAwait(false);
                     ret.Add(key, value);
 
-                    key = await reader.ReadValueAsync(cancellationToken, _TermEncoder).ConfigureAwait(false);
+                    key = await reader.ReadValueAsync(cancellationToken, _TermEncoder)
+                        .ConfigureAwait(false);
                     if (key == null)
-                        throw new RencodeException("Invalid data");
+                        throw new RencodeException(SR.RencodeException_ValueWasExpected);
                 }
             }
             return ret;
@@ -59,14 +64,18 @@ namespace Ziusudra.Rencode
         /// <inheritdoc />
         protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, IDictionary value, CancellationToken cancellationToken)
         {
-            await writer.WriteAsync(new byte[] { value.Count < FIXED_COUNT ? (byte)(FIXED_START + value.Count) : CHR_DICT }, cancellationToken).ConfigureAwait(false);
+            await writer.WriteAsync(new byte[] { value.Count < FIXED_COUNT ? (byte)(FIXED_START + value.Count) : CHR_DICT }, cancellationToken)
+                .ConfigureAwait(false);
             foreach (DictionaryEntry entry in value)
             {
-                await writer.WriteValueAsync(entry.Key, cancellationToken).ConfigureAwait(false);
-                await writer.WriteValueAsync(entry.Value, cancellationToken).ConfigureAwait(false);
+                await writer.WriteValueAsync(entry.Key, cancellationToken)
+                    .ConfigureAwait(false);
+                await writer.WriteValueAsync(entry.Value, cancellationToken)
+                    .ConfigureAwait(false);
             }
             if (value.Count >= FIXED_COUNT)
-                await writer.WriteAsync(new byte[] { CHR_TERM }, cancellationToken).ConfigureAwait(false);
+                await _TermEncoder.WriteValueAsync(writer, CHR_TERM, cancellationToken)
+                    .ConfigureAwait(false);
         }
 
         internal static readonly DictionaryEncoder Instance = new();

@@ -1,0 +1,16 @@
+<!-- CI build dedicated properties, picked up by setting $(DirectoryBuildPropsPath) -->
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)Common.props" />
+
+  <!-- Intermediates redirections, cf. https://github.com/dotnet/sdk/issues/3485 -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)' == ''">$(BaseBuildOutputPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$(BuildCompileIntermediateOutputPath)$(MSBuildProjectName)\</BaseOutputPath>
+    <DefaultItemExcludes>$(MSBuildProjectDirectory)/bin/**;$(MSBuildProjectDirectory)/obj/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <!-- Outputs redirections -->
+  <PropertyGroup>
+    <PackageOutputPath Condition="'$(PackageOutputPath)' == ''">$(BuildBinaryArtefactsOutputPath)</PackageOutputPath>
+  </PropertyGroup>
+</Project>
