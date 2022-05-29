@@ -1,0 +1,52 @@
+name: build
+
+on:
+  push:
+    paths-ignore:
+    - '.vscode/**'
+    - '.editorconfig'
+    - '**.md'
+    - 'LICENSE'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Setup .NET 6.0
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '6.0.x'
+    - name: Restore tools
+      run: dotnet tool restore
+    - name: Build
+      shell: cmd
+      run: |
+        CALL .build/SetEnv.bat
+        dotnet.exe msbuild Ziusudra.proj /nologo /t:Release /m /r /fl /flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8 /bl:build.binlog /nr:False
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        directory: tmp/
+        files: Ziusudra-cobertura-results.xml
+        flags: unittests
+        fail_ci_if_error: false
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: outputs
+        path: |
+          tmp/out/bin/**.*
+    - name: Archive logs
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: logs
+        path: |
+          build.log
+          build.binlog
+        retention-days: 5

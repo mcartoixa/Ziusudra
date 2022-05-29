@@ -162,8 +162,8 @@
     Condition="'@(CoverageResults)' != ''"
     AfterTargets="GenerateTestReports"
   >
-    <ReportGenerator ReportFiles="@(CoverageResults)" TargetDirectory="$(BaseBuildOutputPath)" ReportTypes="HtmlInline;Cobertura" VerbosityLevel="Info" />
-    <Move SourceFiles="$(BaseBuildOutputPath)Cobertura.xml" DestinationFiles="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results.xml" />
+    <ReportGenerator ReportFiles="@(CoverageResults)" TargetDirectory="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results" ReportTypes="HtmlInline;Cobertura" VerbosityLevel="Info" />
+    <Move SourceFiles="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results\Cobertura.xml" DestinationFiles="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results.xml" />
 
     <XmlPeek XmlInputPath="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results.xml" Query="/coverage/@line-rate">
       <Output TaskParameter="Result" ItemName="CoverageLineRate" />
@@ -178,12 +178,12 @@
 
   <Target Name="CountLoc">
     <PropertyGroup>
-      <ClocResultsFile>$(TmpOutputPath)cloc-results.xml</ClocResultsFile>
-      <_ClocCommand Condition="'$(OS)'=='Windows_NT'">&quot;$(InputPath)\.tmp\cloc.exe&quot;</_ClocCommand>
-      <_ClocCommand Condition="'$(_ClocCommand)'==''">perl &quot;$(InputPath)/.tmp/cloc.pl&quot;</_ClocCommand>
+      <ClocResultsFile>$(BaseBuildOutputPath)cloc-results.xml</ClocResultsFile>
+      <_ClocCommand Condition="'$(OS)'=='Windows_NT'">&quot;$(BuildInputPath).tmp\cloc.exe&quot;</_ClocCommand>
+      <_ClocCommand Condition="'$(_ClocCommand)'==''">perl &quot;$(BuildInputPath).tmp/cloc.pl&quot;</_ClocCommand>
     </PropertyGroup>
     <Exec
-      Command="$(_ClocCommand) &quot;$(InputPath)&quot; --exclude-dir=.tmp,.vs,.vscode,bin,build,doc,lib,obj,tmp,GeneratedCode --exclude-ext=csproj,dbmdl,proj,sln,sqlproj,suo,user --3 --quiet --progress-rate=0 --xml --report_file=&quot;$(ClocResultsFile)&quot;"
+      Command="$(_ClocCommand) &quot;$(BuildInputPath)\&quot; --exclude-dir=.tmp,.vs,.vscode,bin,build,doc,lib,obj,tmp,GeneratedCode --exclude-ext=csproj,dbmdl,proj,sln,sqlproj,suo,user --3 --quiet --progress-rate=0 --xml --report_file=&quot;$(ClocResultsFile)&quot;"
       WorkingDirectory="$(InputPath)"
       YieldDuringToolExecution="True"
       IgnoreExitCode="True"
