@@ -69,7 +69,7 @@ namespace Ziusudra.DelugeRpc
                     case RpcMessageType.RPC_EVENT:
                         return RpcEvent.CreateFromValues(values);
                     case RpcMessageType.RPC_ERROR:
-                        return new RpcServerException(values);
+                        return RpcServerException.CreateFromValues(values);
                     case RpcMessageType.RPC_RESPONSE:
                         return new RpcResponse(values);
                 }

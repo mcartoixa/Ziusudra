@@ -28,6 +28,14 @@ namespace Ziusudra.Desktop.ViewModel
             OnPropertyChanging(new PropertyChangingEventArgs(propertyName));
         }
 
+        protected virtual string Error => string.Empty;
+
+        protected virtual string this[string columnName] => string.Empty;
+
+        string IDataErrorInfo.Error => Error;
+
+        string IDataErrorInfo.this[string columnName] => this[columnName];
+
         public event PropertyChangedEventHandler? PropertyChanged;
         public event PropertyChangingEventHandler? PropertyChanging;
     }

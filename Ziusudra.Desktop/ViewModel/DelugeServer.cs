@@ -14,24 +14,37 @@ namespace Ziusudra.Desktop.ViewModel
         public DelugeServer()
         {
             _Client = new DelugeRpc.RpcClient(IPEndPoint.Parse("127.0.0.1:58846"));
+            Username = string.Empty;
+            Password = string.Empty;
         }
 
-        public DelugeServer(IPEndPoint host)
+        public DelugeServer(IPEndPoint host, string username, string password)
         {
             _Client = new DelugeRpc.RpcClient(host);
+            Username = username;
+            Password = password;
         }
 
-        public async ValueTask InitAsync(string username, string password)
+        public async ValueTask ConnectAsync()
         {
-            await _Client.StartAsync();
             _Client.RpcEventReceived += _Client_RpcEventReceived;
-            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.InfoRequest()));
-            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.LoginRequest(username, password)));
-            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.GetMethodList()));
+            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.LoginRequest(Username, Password)));
             HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetConfig()));
             HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.SetEventInterestRequest()));
             HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetSessionState()));
             HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetTorrentsStatusRequest()));
+        }
+
+        public async ValueTask InitAsync()
+        {
+            await _Client.StartAsync();
+            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.InfoRequest()));
+            //HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.GetMethodList()));
+        }
+
+        public async ValueTask GetTorrentsStatus(IEnumerable<string> keys)
+        {
+            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetTorrentsStatusRequest(keys)));
         }
 
         private void HandleResponse(DelugeRpc.Core.GetConfig.Response response)
@@ -42,11 +55,22 @@ namespace Ziusudra.Desktop.ViewModel
 
         private void HandleResponse(DelugeRpc.Core.GetTorrentsStatusRequest.Response response)
         {
-            Torrents = new TorrentList(
-                response.Torrents
-                    .Select(t => new Torrent(t))
-                    .ToArray()
-            );
+            if (Torrents.Count > 0)
+            {
+                foreach (var t in response.Torrents)
+                {
+                    if (Torrents.ContainsHash(t.Hash))
+                        Torrents[t.Hash].Update(t);
+                    else
+                        Torrents.Add(new Torrent(t));
+                }
+
+            } else
+                Torrents = new TorrentList(
+                    response.Torrents
+                        .Select(t => new Torrent(t))
+                        .ToArray()
+                );
         }
 
         private void HandleResponse(DelugeRpc.Daemon.GetMethodList.Response response)
@@ -81,6 +105,7 @@ namespace Ziusudra.Desktop.ViewModel
         }
 
         /// <summary>Get or set the current logger.</summary>
+        [Browsable(false)]
         public ILogger Logger
         {
             get
@@ -94,6 +119,12 @@ namespace Ziusudra.Desktop.ViewModel
             }
         }
 
+        [Browsable(false)]
+        public IPEndPoint Host => _Client.Host;
+
+        public string Hostname => _Client.Host.Address.ToString();
+
+        [Browsable(false)]
         public IList<string> Methods
         {
             get
@@ -110,7 +141,11 @@ namespace Ziusudra.Desktop.ViewModel
             }
         }
 
-        public BindingList<Torrent> Torrents
+        public string Password { get; init; }
+
+        public string Username { get; init; }
+
+        public TorrentList Torrents
         {
             get
             {
@@ -145,7 +180,7 @@ namespace Ziusudra.Desktop.ViewModel
         private readonly DelugeRpc.RpcClient _Client;
         private ILogger _Logger = NullLogger.Instance;
         private string[]? _Methods;
-        private BindingList<Torrent> _Torrents = new TorrentList();
+        private TorrentList _Torrents = new TorrentList();
         private string? _Version;
     }
 }

@@ -1,18 +1,19 @@
 ﻿using System.Collections;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace Ziusudra.DelugeRpc
 {
 
     /// <summary>An error that occurred on the server while processing a request.</summary>
-    public sealed class RpcServerException:
+    public class RpcServerException:
         RpcException,
         IServerReply
     {
 
         /// <summary>Create a new instance of the <see cref="RpcServerException" /> type.</summary>
         /// <param name="values">The values to create </param>
-        public RpcServerException(ICollection values):
+        internal RpcServerException(ICollection values):
             base(GetMessageFromValues(values))
         {
             if (values is IList l)
@@ -26,6 +27,43 @@ namespace Ziusudra.DelugeRpc
         ICollection IMessage.ToValueCollection()
         {
             return Values;
+        }
+
+        /// <summary>Creates a typed error from the specified values.</summary>
+        /// <param name="values">The values to create the error with.</param>
+        /// <returns>The error.</returns>
+        /// <remarks>A typed error is an instance of a class that inherits from <see cref="RpcServerException" />.
+        /// If no specific type is found for the event then a plain <see cref="RpcServerException" /> is returned.</remarks>
+        public static RpcServerException CreateFromValues(ICollection values)
+        {
+            RpcServerException ex = new(values);
+            if (_TypedErrorsLookup.Value.TryGetValue(ex.Source ?? string.Empty, out Type? retType))
+            {
+                var retConstructor = retType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, new Type[] { typeof(ICollection) });
+                if (retConstructor != null)
+                    return (RpcServerException)retConstructor.Invoke(new object?[] { values });
+            }
+
+            return ex;
+        }
+
+        internal static bool IsTypedError(Type type)
+        {
+            return
+                type.IsSubclassOf(typeof(RpcServerException)) &&
+                type.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, new Type[] { typeof(ICollection) }) != null;
+        }
+
+        private static IEnumerable<Type> InitTypedErrorsList()
+        {
+            return typeof(RpcServerException).Assembly.GetTypes()
+                .Where(t => IsTypedError(t));
+        }
+
+        private static IDictionary<string, Type> InitTypedErrorsLookup()
+        {
+            return _TypedErrorsList.Value
+                .ToDictionary(t => t.Name, t => t);
         }
 
         private static string GetMessageFromValues(ICollection values)
@@ -44,5 +82,8 @@ namespace Ziusudra.DelugeRpc
         RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0]);
 
         internal IList Values { get; }
+
+        private static readonly Lazy<IEnumerable<Type>> _TypedErrorsList = new(InitTypedErrorsList);
+        private static readonly Lazy<IDictionary<string, Type>> _TypedErrorsLookup = new(InitTypedErrorsLookup);
     }
 }

@@ -236,6 +236,9 @@ namespace Ziusudra.DelugeRpc
             }
         }
 
+        /// <summary>Gets the current host.</summary>
+        public IPEndPoint Host => _Host;
+
         /// <summary>Event triggered when an RPC event is received from the server.</summary>
         public event EventHandler<RpcEventReceivedEventArgs>? RpcEventReceived;
 

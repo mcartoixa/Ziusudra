@@ -24,51 +24,54 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.SplitContainer splitContainer1;
-            System.Windows.Forms.SplitContainer splitContainer2;
+            components = new System.ComponentModel.Container();
+            SplitContainer splitContainer1;
+            SplitContainer splitContainer2;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.treeView1 = new System.Windows.Forms.TreeView();
-            this._TorrentsView = new System.Windows.Forms.DataGridView();
-            this.activeTimeDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.hashDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.nameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.progressDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.seedingTimeDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.DelugeServerBindingSource = new System.Windows.Forms.BindingSource(this.components);
-            this._TorrentDetailsPanel = new Ziusudra.Desktop.View.TorrentDetailsPanel();
-            this._MenuStrip = new System.Windows.Forms.MenuStrip();
-            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this._ToolStrip = new System.Windows.Forms.ToolStrip();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this._StatusStrip = new System.Windows.Forms.StatusStrip();
-            this._ServerVersionToolStripStatusLabel = new Ziusudra.Desktop.Controls.BindableToolStripStatusLabel();
-            splitContainer1 = new System.Windows.Forms.SplitContainer();
-            splitContainer2 = new System.Windows.Forms.SplitContainer();
-            ((System.ComponentModel.ISupportInitialize)(splitContainer1)).BeginInit();
+            treeView1 = new TreeView();
+            _TorrentsView = new DataGridView();
+            _QueueDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            _NameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            _TotalWantedDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            _ProgressDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            _DownloadPayloadRateDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            _UploadPayloadRateDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            _ExpectedTimeOfArrivalDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            DelugeServerBindingSource = new BindingSource(components);
+            _TorrentDetailsPanel = new Ziusudra.Desktop.View.TorrentDetailsPanel();
+            _MenuStrip = new MenuStrip();
+            _FileToolStripMenuItem = new ToolStripMenuItem();
+            _EditToolStripMenuItem = new ToolStripMenuItem();
+            _ViewToolStripMenuItem = new ToolStripMenuItem();
+            _HelpToolStripMenuItem = new ToolStripMenuItem();
+            _ToolStrip = new ToolStrip();
+            _ConnectionManagerToolStripButton = new ToolStripButton();
+            _StatusStrip = new StatusStrip();
+            _ServerVersionToolStripStatusLabel = new Ziusudra.Desktop.Controls.BindableToolStripStatusLabel();
+            _RefreshTimer = new System.Windows.Forms.Timer(components);
+            splitContainer1 = new SplitContainer();
+            splitContainer2 = new SplitContainer();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(splitContainer2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
             splitContainer2.Panel1.SuspendLayout();
             splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this._TorrentsView)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.DelugeServerBindingSource)).BeginInit();
-            this._MenuStrip.SuspendLayout();
-            this._ToolStrip.SuspendLayout();
-            this._StatusStrip.SuspendLayout();
-            this.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_TorrentsView).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)DelugeServerBindingSource).BeginInit();
+            _MenuStrip.SuspendLayout();
+            _ToolStrip.SuspendLayout();
+            _StatusStrip.SuspendLayout();
+            SuspendLayout();
             // 
             // splitContainer1
             // 
-            splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            splitContainer1.Location = new System.Drawing.Point(0, 49);
+            splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.Location = new Point(0, 49);
             splitContainer1.Name = "splitContainer1";
-            splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            splitContainer1.Orientation = Orientation.Horizontal;
             // 
             // splitContainer1.Panel1
             // 
@@ -76,222 +79,231 @@
             // 
             // splitContainer1.Panel2
             // 
-            splitContainer1.Panel2.Controls.Add(this._TorrentDetailsPanel);
-            splitContainer1.Size = new System.Drawing.Size(800, 379);
+            splitContainer1.Panel2.Controls.Add(_TorrentDetailsPanel);
+            splitContainer1.Size = new Size(800, 379);
             splitContainer1.SplitterDistance = 266;
             splitContainer1.TabIndex = 4;
             // 
             // splitContainer2
             // 
-            splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
-            splitContainer2.Location = new System.Drawing.Point(0, 0);
+            splitContainer2.Dock = DockStyle.Fill;
+            splitContainer2.Location = new Point(0, 0);
             splitContainer2.Name = "splitContainer2";
             // 
             // splitContainer2.Panel1
             // 
-            splitContainer2.Panel1.Controls.Add(this.treeView1);
+            splitContainer2.Panel1.Controls.Add(treeView1);
             // 
             // splitContainer2.Panel2
             // 
-            splitContainer2.Panel2.Controls.Add(this._TorrentsView);
-            splitContainer2.Size = new System.Drawing.Size(800, 266);
+            splitContainer2.Panel2.Controls.Add(_TorrentsView);
+            splitContainer2.Size = new Size(800, 266);
             splitContainer2.SplitterDistance = 243;
             splitContainer2.TabIndex = 0;
             // 
             // treeView1
             // 
-            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeView1.Location = new System.Drawing.Point(0, 0);
-            this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(243, 266);
-            this.treeView1.TabIndex = 0;
+            treeView1.Dock = DockStyle.Fill;
+            treeView1.Location = new Point(0, 0);
+            treeView1.Name = "treeView1";
+            treeView1.Size = new Size(243, 266);
+            treeView1.TabIndex = 0;
             // 
             // _TorrentsView
             // 
-            this._TorrentsView.AllowUserToAddRows = false;
-            this._TorrentsView.AllowUserToOrderColumns = true;
-            this._TorrentsView.AutoGenerateColumns = false;
-            this._TorrentsView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this._TorrentsView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.activeTimeDataGridViewTextBoxColumn,
-            this.hashDataGridViewTextBoxColumn,
-            this.nameDataGridViewTextBoxColumn,
-            this.progressDataGridViewTextBoxColumn,
-            this.seedingTimeDataGridViewTextBoxColumn});
-            this._TorrentsView.DataMember = "Torrents";
-            this._TorrentsView.DataSource = this.DelugeServerBindingSource;
-            this._TorrentsView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._TorrentsView.Location = new System.Drawing.Point(0, 0);
-            this._TorrentsView.Name = "_TorrentsView";
-            this._TorrentsView.ReadOnly = true;
-            this._TorrentsView.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders;
-            this._TorrentsView.RowTemplate.Height = 25;
-            this._TorrentsView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._TorrentsView.ShowEditingIcon = false;
-            this._TorrentsView.Size = new System.Drawing.Size(553, 266);
-            this._TorrentsView.TabIndex = 0;
+            _TorrentsView.AllowUserToAddRows = false;
+            _TorrentsView.AllowUserToOrderColumns = true;
+            _TorrentsView.AutoGenerateColumns = false;
+            _TorrentsView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            _TorrentsView.Columns.AddRange(new DataGridViewColumn[] { _QueueDataGridViewTextBoxColumn, _NameDataGridViewTextBoxColumn, _TotalWantedDataGridViewTextBoxColumn, _ProgressDataGridViewTextBoxColumn, _DownloadPayloadRateDataGridViewTextBoxColumn, _UploadPayloadRateDataGridViewTextBoxColumn, _ExpectedTimeOfArrivalDataGridViewTextBoxColumn });
+            _TorrentsView.DataMember = "Torrents";
+            _TorrentsView.DataSource = DelugeServerBindingSource;
+            _TorrentsView.Dock = DockStyle.Fill;
+            _TorrentsView.Location = new Point(0, 0);
+            _TorrentsView.Name = "_TorrentsView";
+            _TorrentsView.ReadOnly = true;
+            _TorrentsView.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders;
+            _TorrentsView.RowTemplate.Height = 25;
+            _TorrentsView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _TorrentsView.ShowEditingIcon = false;
+            _TorrentsView.Size = new Size(553, 266);
+            _TorrentsView.TabIndex = 0;
             // 
-            // activeTimeDataGridViewTextBoxColumn
+            // _QueueDataGridViewTextBoxColumn
             // 
-            this.activeTimeDataGridViewTextBoxColumn.DataPropertyName = "ActiveTime";
-            this.activeTimeDataGridViewTextBoxColumn.HeaderText = "ActiveTime";
-            this.activeTimeDataGridViewTextBoxColumn.Name = "activeTimeDataGridViewTextBoxColumn";
-            this.activeTimeDataGridViewTextBoxColumn.ReadOnly = true;
+            _QueueDataGridViewTextBoxColumn.DataPropertyName = "Queue";
+            _QueueDataGridViewTextBoxColumn.HeaderText = "#";
+            _QueueDataGridViewTextBoxColumn.Name = "_QueueDataGridViewTextBoxColumn";
+            _QueueDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // hashDataGridViewTextBoxColumn
+            // _NameDataGridViewTextBoxColumn
             // 
-            this.hashDataGridViewTextBoxColumn.DataPropertyName = "Hash";
-            this.hashDataGridViewTextBoxColumn.HeaderText = "Hash";
-            this.hashDataGridViewTextBoxColumn.Name = "hashDataGridViewTextBoxColumn";
-            this.hashDataGridViewTextBoxColumn.ReadOnly = true;
+            _NameDataGridViewTextBoxColumn.DataPropertyName = "Name";
+            _NameDataGridViewTextBoxColumn.HeaderText = "Name";
+            _NameDataGridViewTextBoxColumn.Name = "_NameDataGridViewTextBoxColumn";
+            _NameDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // nameDataGridViewTextBoxColumn
+            // _TotalWantedDataGridViewTextBoxColumn
             // 
-            this.nameDataGridViewTextBoxColumn.DataPropertyName = "Name";
-            this.nameDataGridViewTextBoxColumn.HeaderText = "Name";
-            this.nameDataGridViewTextBoxColumn.Name = "nameDataGridViewTextBoxColumn";
-            this.nameDataGridViewTextBoxColumn.ReadOnly = true;
+            _TotalWantedDataGridViewTextBoxColumn.DataPropertyName = "TotalWanted";
+            _TotalWantedDataGridViewTextBoxColumn.HeaderText = "Size";
+            _TotalWantedDataGridViewTextBoxColumn.Name = "_TotalWantedDataGridViewTextBoxColumn";
+            _TotalWantedDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // progressDataGridViewTextBoxColumn
+            // _ProgressDataGridViewTextBoxColumn
             // 
-            this.progressDataGridViewTextBoxColumn.DataPropertyName = "Progress";
-            this.progressDataGridViewTextBoxColumn.HeaderText = "Progress";
-            this.progressDataGridViewTextBoxColumn.Name = "progressDataGridViewTextBoxColumn";
-            this.progressDataGridViewTextBoxColumn.ReadOnly = true;
+            _ProgressDataGridViewTextBoxColumn.DataPropertyName = "Progress";
+            _ProgressDataGridViewTextBoxColumn.HeaderText = "Progress";
+            _ProgressDataGridViewTextBoxColumn.Name = "_ProgressDataGridViewTextBoxColumn";
+            _ProgressDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // seedingTimeDataGridViewTextBoxColumn
+            // _DownloadPayloadRateDataGridViewTextBoxColumn
             // 
-            this.seedingTimeDataGridViewTextBoxColumn.DataPropertyName = "SeedingTime";
-            this.seedingTimeDataGridViewTextBoxColumn.HeaderText = "SeedingTime";
-            this.seedingTimeDataGridViewTextBoxColumn.Name = "seedingTimeDataGridViewTextBoxColumn";
-            this.seedingTimeDataGridViewTextBoxColumn.ReadOnly = true;
+            _DownloadPayloadRateDataGridViewTextBoxColumn.DataPropertyName = "DownloadPayloadRate";
+            _DownloadPayloadRateDataGridViewTextBoxColumn.HeaderText = "Down Speed";
+            _DownloadPayloadRateDataGridViewTextBoxColumn.Name = "_DownloadPayloadRateDataGridViewTextBoxColumn";
+            _DownloadPayloadRateDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // _UploadPayloadRateDataGridViewTextBoxColumn
+            // 
+            _UploadPayloadRateDataGridViewTextBoxColumn.DataPropertyName = "UploadPayloadRate";
+            _UploadPayloadRateDataGridViewTextBoxColumn.HeaderText = "Up Speed";
+            _UploadPayloadRateDataGridViewTextBoxColumn.Name = "_UploadPayloadRateDataGridViewTextBoxColumn";
+            _UploadPayloadRateDataGridViewTextBoxColumn.ReadOnly = true;
+            // 
+            // _ExpectedTimeOfArrivalDataGridViewTextBoxColumn
+            // 
+            _ExpectedTimeOfArrivalDataGridViewTextBoxColumn.DataPropertyName = "ExpectedTimeOfArrival";
+            _ExpectedTimeOfArrivalDataGridViewTextBoxColumn.HeaderText = "ETA";
+            _ExpectedTimeOfArrivalDataGridViewTextBoxColumn.Name = "_ExpectedTimeOfArrivalDataGridViewTextBoxColumn";
+            _ExpectedTimeOfArrivalDataGridViewTextBoxColumn.ReadOnly = true;
             // 
             // DelugeServerBindingSource
             // 
-            this.DelugeServerBindingSource.AllowNew = false;
-            this.DelugeServerBindingSource.DataSource = typeof(Ziusudra.Desktop.ViewModel.DelugeServer);
+            DelugeServerBindingSource.AllowNew = false;
+            DelugeServerBindingSource.DataSource = typeof(ViewModel.DelugeServer);
             // 
             // _TorrentDetailsPanel
             // 
-            this._TorrentDetailsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._TorrentDetailsPanel.Location = new System.Drawing.Point(0, 0);
-            this._TorrentDetailsPanel.Name = "_TorrentDetailsPanel";
-            this._TorrentDetailsPanel.Size = new System.Drawing.Size(800, 109);
-            this._TorrentDetailsPanel.TabIndex = 0;
-            this._TorrentDetailsPanel.Torrent = null;
+            _TorrentDetailsPanel.Dock = DockStyle.Fill;
+            _TorrentDetailsPanel.Location = new Point(0, 0);
+            _TorrentDetailsPanel.Name = "_TorrentDetailsPanel";
+            _TorrentDetailsPanel.Size = new Size(800, 109);
+            _TorrentDetailsPanel.TabIndex = 0;
+            _TorrentDetailsPanel.Torrent = null;
             // 
             // _MenuStrip
             // 
-            this._MenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem,
-            this.editToolStripMenuItem,
-            this.viewToolStripMenuItem,
-            this.helpToolStripMenuItem});
-            this._MenuStrip.Location = new System.Drawing.Point(0, 0);
-            this._MenuStrip.Name = "_MenuStrip";
-            this._MenuStrip.Size = new System.Drawing.Size(800, 24);
-            this._MenuStrip.TabIndex = 0;
-            this._MenuStrip.Text = "menuStrip1";
+            _MenuStrip.Items.AddRange(new ToolStripItem[] { _FileToolStripMenuItem, _EditToolStripMenuItem, _ViewToolStripMenuItem, _HelpToolStripMenuItem });
+            _MenuStrip.Location = new Point(0, 0);
+            _MenuStrip.Name = "_MenuStrip";
+            _MenuStrip.Size = new Size(800, 24);
+            _MenuStrip.TabIndex = 0;
+            _MenuStrip.Text = "menuStrip1";
             // 
-            // fileToolStripMenuItem
+            // _FileToolStripMenuItem
             // 
-            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
-            this.fileToolStripMenuItem.Text = "&File";
+            _FileToolStripMenuItem.Name = "_FileToolStripMenuItem";
+            _FileToolStripMenuItem.Size = new Size(37, 20);
+            _FileToolStripMenuItem.Text = "&File";
             // 
-            // editToolStripMenuItem
+            // _EditToolStripMenuItem
             // 
-            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
-            this.editToolStripMenuItem.Text = "&Edit";
+            _EditToolStripMenuItem.Name = "_EditToolStripMenuItem";
+            _EditToolStripMenuItem.Size = new Size(39, 20);
+            _EditToolStripMenuItem.Text = "&Edit";
             // 
-            // viewToolStripMenuItem
+            // _ViewToolStripMenuItem
             // 
-            this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-            this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
-            this.viewToolStripMenuItem.Text = "&View";
+            _ViewToolStripMenuItem.Name = "_ViewToolStripMenuItem";
+            _ViewToolStripMenuItem.Size = new Size(44, 20);
+            _ViewToolStripMenuItem.Text = "&View";
             // 
-            // helpToolStripMenuItem
+            // _HelpToolStripMenuItem
             // 
-            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
-            this.helpToolStripMenuItem.Text = "&Help";
+            _HelpToolStripMenuItem.Name = "_HelpToolStripMenuItem";
+            _HelpToolStripMenuItem.Size = new Size(44, 20);
+            _HelpToolStripMenuItem.Text = "&Help";
             // 
             // _ToolStrip
             // 
-            this._ToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripButton1});
-            this._ToolStrip.Location = new System.Drawing.Point(0, 24);
-            this._ToolStrip.Name = "_ToolStrip";
-            this._ToolStrip.Size = new System.Drawing.Size(800, 25);
-            this._ToolStrip.TabIndex = 1;
-            this._ToolStrip.Text = "toolStrip1";
+            _ToolStrip.Items.AddRange(new ToolStripItem[] { _ConnectionManagerToolStripButton });
+            _ToolStrip.Location = new Point(0, 24);
+            _ToolStrip.Name = "_ToolStrip";
+            _ToolStrip.Size = new Size(800, 25);
+            _ToolStrip.TabIndex = 1;
+            _ToolStrip.Text = "toolStrip1";
             // 
-            // toolStripButton1
+            // _ConnectionManagerToolStripButton
             // 
-            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(23, 22);
-            this.toolStripButton1.Text = "toolStripButton1";
+            _ConnectionManagerToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            _ConnectionManagerToolStripButton.Image = (Image)resources.GetObject("_ConnectionManagerToolStripButton.Image");
+            _ConnectionManagerToolStripButton.ImageTransparentColor = Color.Magenta;
+            _ConnectionManagerToolStripButton.Name = "_ConnectionManagerToolStripButton";
+            _ConnectionManagerToolStripButton.Size = new Size(23, 22);
+            _ConnectionManagerToolStripButton.Text = "Connection Manager";
+            _ConnectionManagerToolStripButton.Click += _ConnectionManagerToolStripButton_Click;
             // 
             // _StatusStrip
             // 
-            this._StatusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this._ServerVersionToolStripStatusLabel});
-            this._StatusStrip.Location = new System.Drawing.Point(0, 428);
-            this._StatusStrip.Name = "_StatusStrip";
-            this._StatusStrip.Size = new System.Drawing.Size(800, 22);
-            this._StatusStrip.TabIndex = 2;
+            _StatusStrip.Items.AddRange(new ToolStripItem[] { _ServerVersionToolStripStatusLabel });
+            _StatusStrip.Location = new Point(0, 428);
+            _StatusStrip.Name = "_StatusStrip";
+            _StatusStrip.Size = new Size(800, 22);
+            _StatusStrip.TabIndex = 2;
             // 
             // _ServerVersionToolStripStatusLabel
             // 
-            this._ServerVersionToolStripStatusLabel.Name = "_ServerVersionToolStripStatusLabel";
-            this._ServerVersionToolStripStatusLabel.Size = new System.Drawing.Size(0, 17);
+            _ServerVersionToolStripStatusLabel.Name = "_ServerVersionToolStripStatusLabel";
+            _ServerVersionToolStripStatusLabel.Size = new Size(0, 17);
+            // 
+            // _RefreshTimer
+            // 
+            _RefreshTimer.Interval = 5000;
+            _RefreshTimer.Tick += _RefreshTimer_Tick;
             // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(splitContainer1);
-            this.Controls.Add(this._StatusStrip);
-            this.Controls.Add(this._ToolStrip);
-            this.Controls.Add(this._MenuStrip);
-            this.MainMenuStrip = this._MenuStrip;
-            this.Name = "MainForm";
-            this.Text = "Ziusudra";
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(800, 450);
+            Controls.Add(splitContainer1);
+            Controls.Add(_StatusStrip);
+            Controls.Add(_ToolStrip);
+            Controls.Add(_MenuStrip);
+            MainMenuStrip = _MenuStrip;
+            Name = "MainForm";
+            Text = "Ziusudra";
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(splitContainer1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
             splitContainer2.Panel1.ResumeLayout(false);
             splitContainer2.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(splitContainer2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this._TorrentsView)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.DelugeServerBindingSource)).EndInit();
-            this._MenuStrip.ResumeLayout(false);
-            this._MenuStrip.PerformLayout();
-            this._ToolStrip.ResumeLayout(false);
-            this._ToolStrip.PerformLayout();
-            this._StatusStrip.ResumeLayout(false);
-            this._StatusStrip.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)_TorrentsView).EndInit();
+            ((System.ComponentModel.ISupportInitialize)DelugeServerBindingSource).EndInit();
+            _MenuStrip.ResumeLayout(false);
+            _MenuStrip.PerformLayout();
+            _ToolStrip.ResumeLayout(false);
+            _ToolStrip.PerformLayout();
+            _StatusStrip.ResumeLayout(false);
+            _StatusStrip.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 
         #endregion
 
         private MenuStrip _MenuStrip;
-        private ToolStripMenuItem fileToolStripMenuItem;
-        private ToolStripMenuItem editToolStripMenuItem;
-        private ToolStripMenuItem viewToolStripMenuItem;
-        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem _FileToolStripMenuItem;
+        private ToolStripMenuItem _EditToolStripMenuItem;
+        private ToolStripMenuItem _ViewToolStripMenuItem;
+        private ToolStripMenuItem _HelpToolStripMenuItem;
         private ToolStrip _ToolStrip;
-        private ToolStripButton toolStripButton1;
+        private ToolStripButton _ConnectionManagerToolStripButton;
         private StatusStrip _StatusStrip;
         private SplitContainer splitContainer1;
         private SplitContainer splitContainer2;
@@ -300,10 +312,13 @@
         private View.TorrentDetailsPanel _TorrentDetailsPanel;
         private BindingSource DelugeServerBindingSource;
         private Controls.BindableToolStripStatusLabel _ServerVersionToolStripStatusLabel;
-        private DataGridViewTextBoxColumn activeTimeDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn hashDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn nameDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn progressDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn seedingTimeDataGridViewTextBoxColumn;
+        private System.Windows.Forms.Timer _RefreshTimer;
+        private DataGridViewTextBoxColumn _QueueDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn _NameDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn _TotalWantedDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn _ProgressDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn _DownloadPayloadRateDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn _UploadPayloadRateDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn _ExpectedTimeOfArrivalDataGridViewTextBoxColumn;
     }
 }

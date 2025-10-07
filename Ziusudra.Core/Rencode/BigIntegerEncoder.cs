@@ -21,7 +21,7 @@ namespace Ziusudra.Rencode
         }
 
         /// <inheritdoc />
-        protected async override ValueTask<BigInteger> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
+        protected override async ValueTask<BigInteger> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
         {
             if (header == CHR_INT)
             {
@@ -38,7 +38,7 @@ namespace Ziusudra.Rencode
         }
 
         /// <inheritdoc />
-        protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, BigInteger value, CancellationToken cancellationToken)
+        protected override async ValueTask DoWriteValueAsync(IRencodeWriter writer, BigInteger value, CancellationToken cancellationToken)
         {
             if (value >= long.MinValue && value <= long.MaxValue)
             {
