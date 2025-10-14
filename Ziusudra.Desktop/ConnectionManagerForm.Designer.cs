@@ -159,6 +159,7 @@
             // _DelugerServersBindingSource
             // 
             _DelugerServersBindingSource.DataSource = typeof(ViewModel.DelugeServer);
+            _DelugerServersBindingSource.ListChanged += _DelugerServersBindingSource_ListChanged;
             // 
             // panel2
             // 
@@ -172,6 +173,8 @@
             // 
             // _CancelButton
             // 
+            _CancelButton.CausesValidation = false;
+            _CancelButton.DialogResult = DialogResult.Cancel;
             _CancelButton.Location = new Point(425, 3);
             _CancelButton.Name = "_CancelButton";
             _CancelButton.Size = new Size(75, 23);
@@ -181,6 +184,7 @@
             // 
             // _ConnectButton
             // 
+            _ConnectButton.DialogResult = DialogResult.OK;
             _ConnectButton.Location = new Point(344, 3);
             _ConnectButton.Name = "_ConnectButton";
             _ConnectButton.Size = new Size(75, 23);

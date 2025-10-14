@@ -8,7 +8,8 @@ namespace Ziusudra.Desktop.ViewModel
 
     public class DelugeServer:
         ViewEntity,
-        IAsyncDisposable
+        IAsyncDisposable,
+        IDisposable
     {
 
         public DelugeServer()
@@ -24,27 +25,49 @@ namespace Ziusudra.Desktop.ViewModel
             Username = username;
             Password = password;
         }
+        ~DelugeServer()
+        {
+            Dispose(false);
+        }
 
         public async ValueTask ConnectAsync()
         {
             _Client.RpcEventReceived += _Client_RpcEventReceived;
             HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.LoginRequest(Username, Password)));
             HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetConfig()));
-            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.SetEventInterestRequest()));
-            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetSessionState()));
-            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetTorrentsStatusRequest()));
+            //HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.SetEventInterestRequest()));
+            //HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetSessionState()));
+            //HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetTorrentsStatusRequest()));
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public async ValueTask InitAsync()
         {
             await _Client.StartAsync();
             HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.InfoRequest()));
-            //HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Daemon.GetMethodList()));
         }
 
-        public async ValueTask GetTorrentsStatus(IEnumerable<string> keys)
+        public async ValueTask GetTorrentsStatus(IEnumerable<string>? keys = null)
         {
-            HandleResponse(await _Client.SendRequestAsync(new DelugeRpc.Core.GetTorrentsStatusRequest(keys)));
+            DelugeRpc.Core.GetTorrentsStatusRequest request;
+            if (keys != null)
+                request = new DelugeRpc.Core.GetTorrentsStatusRequest(keys);
+            else
+                request = new DelugeRpc.Core.GetTorrentsStatusRequest();
+            HandleResponse(await _Client.SendRequestAsync(request));
+        }
+
+        protected void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                ((IDisposable)_Client).Dispose();
+            }
         }
 
         private void HandleResponse(DelugeRpc.Core.GetConfig.Response response)
@@ -96,7 +119,10 @@ namespace Ziusudra.Desktop.ViewModel
 
         private async ValueTask DisposeAsync()
         {
-            await _Client.StopAsync();
+            await ((IAsyncDisposable)_Client).DisposeAsync().ConfigureAwait(false);
+ 
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         ValueTask IAsyncDisposable.DisposeAsync()

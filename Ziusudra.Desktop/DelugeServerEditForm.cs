@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
-
-namespace Ziusudra.Desktop
+﻿namespace Ziusudra.Desktop
 {
     public partial class DelugeServerEditForm:
         Form

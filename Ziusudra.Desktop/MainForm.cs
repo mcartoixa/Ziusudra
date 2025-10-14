@@ -24,23 +24,34 @@ namespace Ziusudra.Desktop
             _UploadPayloadRateDataGridViewTextBoxColumn.Tag = "upload_payload_rate";
         }
 
-        protected override async void OnLoad(EventArgs e)
+        protected override async void OnClosed(EventArgs e)
         {
-            base.OnLoad(e);
+            if (_Server != null)
+                await ((IAsyncDisposable)_Server).DisposeAsync();
+            _Server = null;
 
-            await _Server.InitAsync();
-            await _Server.ConnectAsync();
-            DelugeServerBindingSource.DataSource = _Server;
+            base.OnClosed(e);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            _RefreshTimer.Enabled = false;
+
+            base.OnFormClosing(e);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
             _RefreshTimer.Enabled = true;
         }
 
-        protected override async void OnClosed(EventArgs e)
+        protected override void OnVisibleChanged(EventArgs e)
         {
-            _RefreshTimer.Enabled = false;
-            if (_Server != null)
-                await ((IAsyncDisposable)_Server).DisposeAsync();
+            base.OnVisibleChanged(e);
 
-            base.OnClosed(e);
+            _RefreshTimer.Enabled = Visible;
         }
 
         /// <summary>Get or set the current logger.</summary>
@@ -56,10 +67,16 @@ namespace Ziusudra.Desktop
             }
         }
 
-        private void _ConnectionManagerToolStripButton_Click(object sender, EventArgs e)
+        private async void _ConnectionManagerToolStripButton_Click(object sender, EventArgs e)
         {
             using var form = new ConnectionManagerForm();
-            form.ShowDialog(this);
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                _Server = form.Current;
+                if (_Server != null)
+                    await _Server.ConnectAsync();
+                DelugeServerBindingSource.DataSource = _Server;
+            }
         }
 
         private async void _RefreshTimer_Tick(object sender, EventArgs e)
@@ -74,6 +91,12 @@ namespace Ziusudra.Desktop
                     .Distinct();
                 await _Server.GetTorrentsStatus(keys);
             }
+        }
+
+        private void _AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new AboutBox();
+            form.ShowDialog(this);
         }
 
         private ILogger _Logger = NullLogger.Instance;

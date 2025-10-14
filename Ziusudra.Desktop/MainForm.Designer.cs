@@ -49,6 +49,7 @@
             _StatusStrip = new StatusStrip();
             _ServerVersionToolStripStatusLabel = new Ziusudra.Desktop.Controls.BindableToolStripStatusLabel();
             _RefreshTimer = new System.Windows.Forms.Timer(components);
+            _AboutToolStripMenuItem = new ToolStripMenuItem();
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -123,7 +124,6 @@
             _TorrentsView.Name = "_TorrentsView";
             _TorrentsView.ReadOnly = true;
             _TorrentsView.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders;
-            _TorrentsView.RowTemplate.Height = 25;
             _TorrentsView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _TorrentsView.ShowEditingIcon = false;
             _TorrentsView.Size = new Size(553, 266);
@@ -221,6 +221,7 @@
             // 
             // _HelpToolStripMenuItem
             // 
+            _HelpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _AboutToolStripMenuItem });
             _HelpToolStripMenuItem.Name = "_HelpToolStripMenuItem";
             _HelpToolStripMenuItem.Size = new Size(44, 20);
             _HelpToolStripMenuItem.Text = "&Help";
@@ -261,6 +262,13 @@
             // 
             _RefreshTimer.Interval = 5000;
             _RefreshTimer.Tick += _RefreshTimer_Tick;
+            // 
+            // _AboutToolStripMenuItem
+            // 
+            _AboutToolStripMenuItem.Name = "_AboutToolStripMenuItem";
+            _AboutToolStripMenuItem.Size = new Size(180, 22);
+            _AboutToolStripMenuItem.Text = "About";
+            _AboutToolStripMenuItem.Click += _AboutToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -320,5 +328,6 @@
         private DataGridViewTextBoxColumn _DownloadPayloadRateDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn _UploadPayloadRateDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn _ExpectedTimeOfArrivalDataGridViewTextBoxColumn;
+        private ToolStripMenuItem _AboutToolStripMenuItem;
     }
 }

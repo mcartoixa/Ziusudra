@@ -13,6 +13,10 @@ namespace Ziusudra.Desktop.ViewModel
 
             if (torrent.ActiveTime.HasValue)
                 _ActiveTime = torrent.ActiveTime;
+            if (torrent.DownloadPayloadRate.HasValue)
+                _DownloadPayloadRate = torrent.DownloadPayloadRate;
+            if (torrent.ExpectedTimeOfArrival.HasValue)
+                ExpectedTimeOfArrival = torrent.ExpectedTimeOfArrival;
             if (torrent.Name != null)
                 _Name = torrent.Name;
             if (torrent.Progress.HasValue)
@@ -23,12 +27,18 @@ namespace Ziusudra.Desktop.ViewModel
                 _SeedingTime = torrent.SeedingTime;
             if (torrent.TotalWanted.HasValue)
                 _TotalWanted = torrent.TotalWanted;
+            if (torrent.UploadPayloadRate.HasValue)
+                _UploadPayloadRate = torrent.UploadPayloadRate;
         }
 
         public void Update(DelugeRpc.Core.Torrent torrent)
         {
             if (torrent.ActiveTime.HasValue)
                 ActiveTime = torrent.ActiveTime;
+            if (torrent.DownloadPayloadRate.HasValue)
+                DownloadPayloadRate = torrent.DownloadPayloadRate;
+            if (torrent.ExpectedTimeOfArrival.HasValue)
+                ExpectedTimeOfArrival = torrent.ExpectedTimeOfArrival;
             if (torrent.Name != null)
                 Name = torrent.Name;
             if (torrent.Progress.HasValue)
@@ -39,6 +49,8 @@ namespace Ziusudra.Desktop.ViewModel
                 SeedingTime = torrent.SeedingTime;
             if (torrent.TotalWanted.HasValue)
                 TotalWanted = torrent.TotalWanted;
+            if (torrent.UploadPayloadRate.HasValue)
+                UploadPayloadRate = torrent.UploadPayloadRate;
         }
 
         public TimeSpan? ActiveTime

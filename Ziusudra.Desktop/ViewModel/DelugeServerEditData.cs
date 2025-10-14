@@ -35,7 +35,7 @@ namespace Ziusudra.Desktop.ViewModel
             {
                 try
                 {
-                    CreateServer();
+                    var server = CreateServer();
                     return string.Empty;
                 } catch (Exception ex)
                 {

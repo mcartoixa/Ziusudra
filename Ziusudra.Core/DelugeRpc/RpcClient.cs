@@ -92,7 +92,6 @@ namespace Ziusudra.DelugeRpc
             _Stream = new SslStream(ns, true);
             await _Stream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions() {
                 CertificateRevocationCheckMode = System.Security.Cryptography.X509Certificates.X509RevocationMode.NoCheck,
-                EncryptionPolicy = EncryptionPolicy.AllowNoEncryption,
                 RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true, // Do not validate certificates
                 TargetHost = _Host.Address.ToString()
             }, cancellationToken)
