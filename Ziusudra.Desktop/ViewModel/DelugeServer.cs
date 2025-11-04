@@ -62,12 +62,32 @@ namespace Ziusudra.Desktop.ViewModel
             HandleResponse(await _Client.SendRequestAsync(request));
         }
 
+        public async ValueTask GetFilterTree(bool showZeroHits = true, IEnumerable<string>? hiddenCategories = null)
+        {
+            DelugeRpc.Core.GetFilterTreeRequest request;
+            if (!showZeroHits || (hiddenCategories != null))
+                request = new DelugeRpc.Core.GetFilterTreeRequest(showZeroHits, hiddenCategories);
+            else
+                request = new DelugeRpc.Core.GetFilterTreeRequest();
+            HandleResponse(await _Client.SendRequestAsync(request));
+        }
+
         protected void Dispose(bool disposing)
         {
             if (disposing)
             {
                 ((IDisposable)_Client).Dispose();
             }
+        }
+
+        private void HandleResponse(DelugeRpc.Core.GetFilterTreeRequest.Response response)
+        {
+            var categories = response.Filters.GroupBy(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Select(f => new Filter(f))
+                )
+                .Select(g => new FilterCategory(g.SelectMany(f => f)));
+            FilterCategories.Update(categories);
         }
 
         private void HandleResponse(DelugeRpc.Core.GetConfig.Response response)
@@ -78,22 +98,8 @@ namespace Ziusudra.Desktop.ViewModel
 
         private void HandleResponse(DelugeRpc.Core.GetTorrentsStatusRequest.Response response)
         {
-            if (Torrents.Count > 0)
-            {
-                foreach (var t in response.Torrents)
-                {
-                    if (Torrents.ContainsHash(t.Hash))
-                        Torrents[t.Hash].Update(t);
-                    else
-                        Torrents.Add(new Torrent(t));
-                }
-
-            } else
-                Torrents = new TorrentList(
-                    response.Torrents
-                        .Select(t => new Torrent(t))
-                        .ToArray()
-                );
+            var torrents = response.Torrents.Select(t => new Torrent(t));
+            Torrents.Update(torrents);
         }
 
         private void HandleResponse(DelugeRpc.Daemon.GetMethodList.Response response)
@@ -128,6 +134,22 @@ namespace Ziusudra.Desktop.ViewModel
         ValueTask IAsyncDisposable.DisposeAsync()
         {
             return DisposeAsync();
+        }
+
+        public FilterCategoryList FilterCategories
+        {
+            get
+            {
+                return _FilterCategories;
+            }
+            private set
+            {
+                if (_FilterCategories != value)
+                {
+                    _FilterCategories = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         /// <summary>Get or set the current logger.</summary>
@@ -204,6 +226,7 @@ namespace Ziusudra.Desktop.ViewModel
         }
 
         private readonly DelugeRpc.RpcClient _Client;
+        private FilterCategoryList _FilterCategories = new FilterCategoryList();
         private ILogger _Logger = NullLogger.Instance;
         private string[]? _Methods;
         private TorrentList _Torrents = new TorrentList();

@@ -10,17 +10,36 @@ namespace Ziusudra.Desktop.ViewModel
 
         public TorrentList():
             base()
-        { }
+        {
+            AllowNew = true;
+        }
 
         public TorrentList(IList<Torrent> torrents):
             base(torrents)
         {
+            AllowNew = true;
             _InitInternalDictionary();
         }
 
         public bool ContainsHash(string hash)
         {
             return _TorrentsByHash.ContainsKey(hash);
+        }
+
+        public void Update(IEnumerable<Torrent> torrents)
+        {
+            foreach (Torrent t in torrents.Except(Items))
+            {
+                Remove(t);
+                _TorrentsByHash.Remove(t.Hash);
+            }
+            foreach (Torrent t in torrents)
+                if (!ContainsHash(t.Hash))
+                {
+                    Add(t);
+                    _TorrentsByHash[t.Hash] = t;
+                } else
+                    this[t.Hash].Update(t);
         }
 
         protected override void ClearItems()
@@ -55,6 +74,11 @@ namespace Ziusudra.Desktop.ViewModel
                 _TorrentsByHash.Add(t.Hash, t);
         }
 
+        IEnumerator<KeyValuePair<string, Torrent>> IEnumerable<KeyValuePair<string, Torrent>>.GetEnumerator()
+        {
+            return _TorrentsByHash.GetEnumerator();
+        }
+
         bool IReadOnlyDictionary<string, Torrent>.ContainsKey(string key)
         {
             return ContainsHash(key);
@@ -63,11 +87,6 @@ namespace Ziusudra.Desktop.ViewModel
         bool IReadOnlyDictionary<string, Torrent>.TryGetValue(string key, out Torrent value)
         {
             return _TorrentsByHash.TryGetValue(key, out value);
-        }
-
-        IEnumerator<KeyValuePair<string, Torrent>> IEnumerable<KeyValuePair<string, Torrent>>.GetEnumerator()
-        {
-            return _TorrentsByHash.GetEnumerator();
         }
 
         public IEnumerable<string> Hashes => _TorrentsByHash.Keys;

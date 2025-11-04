@@ -232,6 +232,10 @@ namespace Ziusudra.DelugeRpc
             set
             {
                 _Logger = value;
+                if (_Reader != null)
+                    _Reader.Logger = value;
+                if (_Writer != null)
+                    _Writer.Logger = value;
             }
         }
 

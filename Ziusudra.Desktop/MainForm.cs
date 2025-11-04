@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -13,7 +12,7 @@ namespace Ziusudra.Desktop
             InitializeComponent();
 
             // TODO: make this work through the designer
-            _ServerVersionToolStripStatusLabel.DataBindings.Add(new Binding("Text", DelugeServerBindingSource, "Version", true));
+            _ServerVersionToolStripStatusLabel.DataBindings.Add(new Binding("Text", _DelugeServerBindingSource, "Version", true));
 
             _DownloadPayloadRateDataGridViewTextBoxColumn.Tag = "download_payload_rate";
             _ExpectedTimeOfArrivalDataGridViewTextBoxColumn.Tag = "eta";
@@ -73,9 +72,12 @@ namespace Ziusudra.Desktop
             if (form.ShowDialog(this) == DialogResult.OK)
             {
                 _Server = form.Current;
+                _DelugeServerBindingSource.DataSource = _Server;
                 if (_Server != null)
+                {
+                    _Server.Logger = _Logger;
                     await _Server.ConnectAsync();
-                DelugeServerBindingSource.DataSource = _Server;
+                }
             }
         }
 
@@ -90,6 +92,8 @@ namespace Ziusudra.Desktop
                     .SelectMany(s => s.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                     .Distinct();
                 await _Server.GetTorrentsStatus(keys);
+
+                await _Server.GetFilterTree();
             }
         }
 

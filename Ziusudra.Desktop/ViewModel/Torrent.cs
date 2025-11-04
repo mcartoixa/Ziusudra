@@ -4,7 +4,9 @@ namespace Ziusudra.Desktop.ViewModel
 {
 
     public class Torrent:
-        ViewEntity
+        ViewEntity,
+        IComparable<Torrent>,
+        IEquatable<Torrent>
     {
 
         public Torrent(DelugeRpc.Core.Torrent torrent)
@@ -31,26 +33,49 @@ namespace Ziusudra.Desktop.ViewModel
                 _UploadPayloadRate = torrent.UploadPayloadRate;
         }
 
-        public void Update(DelugeRpc.Core.Torrent torrent)
+        public void Update(Torrent torrent)
         {
-            if (torrent.ActiveTime.HasValue)
-                ActiveTime = torrent.ActiveTime;
-            if (torrent.DownloadPayloadRate.HasValue)
-                DownloadPayloadRate = torrent.DownloadPayloadRate;
-            if (torrent.ExpectedTimeOfArrival.HasValue)
-                ExpectedTimeOfArrival = torrent.ExpectedTimeOfArrival;
-            if (torrent.Name != null)
-                Name = torrent.Name;
-            if (torrent.Progress.HasValue)
-                Progress = torrent.Progress;
-            if (torrent.Queue.HasValue)
-                Queue = torrent.Queue;
-            if (torrent.SeedingTime.HasValue)
-                SeedingTime = torrent.SeedingTime;
-            if (torrent.TotalWanted.HasValue)
-                TotalWanted = torrent.TotalWanted;
-            if (torrent.UploadPayloadRate.HasValue)
-                UploadPayloadRate = torrent.UploadPayloadRate;
+            ActiveTime = torrent.ActiveTime;
+            DownloadPayloadRate = torrent.DownloadPayloadRate;
+            ExpectedTimeOfArrival = torrent.ExpectedTimeOfArrival;
+            Name = torrent.Name;
+            Progress = torrent.Progress;
+            Queue = torrent.Queue;
+            SeedingTime = torrent.SeedingTime;
+            TotalWanted = torrent.TotalWanted;
+            UploadPayloadRate = torrent.UploadPayloadRate;
+        }
+
+        public override bool Equals(object? obj) => Equals(obj as Torrent);
+
+        public bool Equals(Torrent? other)
+        {
+            if (other is null)
+                return false;
+            return Hash.Equals(other.Hash);
+        }
+
+        public override int GetHashCode() => Hash.GetHashCode();
+
+        int IComparable<Torrent>.CompareTo(Torrent? other)
+        {
+            if (other is null)
+                return 1;
+            return Hash.CompareTo(other.Hash);
+        }
+
+        public static bool operator ==(Torrent? torrent1, Torrent? torrent2)
+        {
+            if (torrent1 is null)
+                return torrent2 is null;
+            return torrent1.Equals(torrent2);
+        }
+
+        public static bool operator !=(Torrent? torrent1, Torrent? torrent2)
+        {
+            if (torrent1 is null)
+                return torrent2 is not null;
+            return !torrent1.Equals(torrent2);
         }
 
         public TimeSpan? ActiveTime

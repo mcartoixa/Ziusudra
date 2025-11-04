@@ -27,8 +27,10 @@
             components = new System.ComponentModel.Container();
             SplitContainer splitContainer1;
             SplitContainer splitContainer2;
+            BindingSource _FiltersBindingSource;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            treeView1 = new TreeView();
+            _FiltersAccordion = new Ziusudra.Desktop.View.Accordion();
+            _DelugeServerBindingSource = new BindingSource(components);
             _TorrentsView = new DataGridView();
             _QueueDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             _NameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
@@ -37,21 +39,21 @@
             _DownloadPayloadRateDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             _UploadPayloadRateDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             _ExpectedTimeOfArrivalDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            DelugeServerBindingSource = new BindingSource(components);
             _TorrentDetailsPanel = new Ziusudra.Desktop.View.TorrentDetailsPanel();
             _MenuStrip = new MenuStrip();
             _FileToolStripMenuItem = new ToolStripMenuItem();
             _EditToolStripMenuItem = new ToolStripMenuItem();
             _ViewToolStripMenuItem = new ToolStripMenuItem();
             _HelpToolStripMenuItem = new ToolStripMenuItem();
+            _AboutToolStripMenuItem = new ToolStripMenuItem();
             _ToolStrip = new ToolStrip();
             _ConnectionManagerToolStripButton = new ToolStripButton();
             _StatusStrip = new StatusStrip();
             _ServerVersionToolStripStatusLabel = new Ziusudra.Desktop.Controls.BindableToolStripStatusLabel();
             _RefreshTimer = new System.Windows.Forms.Timer(components);
-            _AboutToolStripMenuItem = new ToolStripMenuItem();
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
+            _FiltersBindingSource = new BindingSource(components);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -60,8 +62,9 @@
             splitContainer2.Panel1.SuspendLayout();
             splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_FiltersBindingSource).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)_DelugeServerBindingSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_TorrentsView).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)DelugeServerBindingSource).BeginInit();
             _MenuStrip.SuspendLayout();
             _ToolStrip.SuspendLayout();
             _StatusStrip.SuspendLayout();
@@ -93,7 +96,7 @@
             // 
             // splitContainer2.Panel1
             // 
-            splitContainer2.Panel1.Controls.Add(treeView1);
+            splitContainer2.Panel1.Controls.Add(_FiltersAccordion);
             // 
             // splitContainer2.Panel2
             // 
@@ -102,13 +105,24 @@
             splitContainer2.SplitterDistance = 243;
             splitContainer2.TabIndex = 0;
             // 
-            // treeView1
+            // _FiltersAccordion
             // 
-            treeView1.Dock = DockStyle.Fill;
-            treeView1.Location = new Point(0, 0);
-            treeView1.Name = "treeView1";
-            treeView1.Size = new Size(243, 266);
-            treeView1.TabIndex = 0;
+            _FiltersAccordion.DataSource = _FiltersBindingSource;
+            _FiltersAccordion.Dock = DockStyle.Fill;
+            _FiltersAccordion.Location = new Point(0, 0);
+            _FiltersAccordion.Name = "_FiltersAccordion";
+            _FiltersAccordion.Size = new Size(243, 266);
+            _FiltersAccordion.TabIndex = 1;
+            // 
+            // _FiltersBindingSource
+            // 
+            _FiltersBindingSource.DataMember = "FilterCategories";
+            _FiltersBindingSource.DataSource = _DelugeServerBindingSource;
+            // 
+            // _DelugeServerBindingSource
+            // 
+            _DelugeServerBindingSource.AllowNew = false;
+            _DelugeServerBindingSource.DataSource = typeof(ViewModel.DelugeServer);
             // 
             // _TorrentsView
             // 
@@ -118,7 +132,7 @@
             _TorrentsView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             _TorrentsView.Columns.AddRange(new DataGridViewColumn[] { _QueueDataGridViewTextBoxColumn, _NameDataGridViewTextBoxColumn, _TotalWantedDataGridViewTextBoxColumn, _ProgressDataGridViewTextBoxColumn, _DownloadPayloadRateDataGridViewTextBoxColumn, _UploadPayloadRateDataGridViewTextBoxColumn, _ExpectedTimeOfArrivalDataGridViewTextBoxColumn });
             _TorrentsView.DataMember = "Torrents";
-            _TorrentsView.DataSource = DelugeServerBindingSource;
+            _TorrentsView.DataSource = _DelugeServerBindingSource;
             _TorrentsView.Dock = DockStyle.Fill;
             _TorrentsView.Location = new Point(0, 0);
             _TorrentsView.Name = "_TorrentsView";
@@ -178,11 +192,6 @@
             _ExpectedTimeOfArrivalDataGridViewTextBoxColumn.Name = "_ExpectedTimeOfArrivalDataGridViewTextBoxColumn";
             _ExpectedTimeOfArrivalDataGridViewTextBoxColumn.ReadOnly = true;
             // 
-            // DelugeServerBindingSource
-            // 
-            DelugeServerBindingSource.AllowNew = false;
-            DelugeServerBindingSource.DataSource = typeof(ViewModel.DelugeServer);
-            // 
             // _TorrentDetailsPanel
             // 
             _TorrentDetailsPanel.Dock = DockStyle.Fill;
@@ -226,6 +235,13 @@
             _HelpToolStripMenuItem.Size = new Size(44, 20);
             _HelpToolStripMenuItem.Text = "&Help";
             // 
+            // _AboutToolStripMenuItem
+            // 
+            _AboutToolStripMenuItem.Name = "_AboutToolStripMenuItem";
+            _AboutToolStripMenuItem.Size = new Size(107, 22);
+            _AboutToolStripMenuItem.Text = "About";
+            _AboutToolStripMenuItem.Click += _AboutToolStripMenuItem_Click;
+            // 
             // _ToolStrip
             // 
             _ToolStrip.Items.AddRange(new ToolStripItem[] { _ConnectionManagerToolStripButton });
@@ -263,13 +279,6 @@
             _RefreshTimer.Interval = 5000;
             _RefreshTimer.Tick += _RefreshTimer_Tick;
             // 
-            // _AboutToolStripMenuItem
-            // 
-            _AboutToolStripMenuItem.Name = "_AboutToolStripMenuItem";
-            _AboutToolStripMenuItem.Size = new Size(180, 22);
-            _AboutToolStripMenuItem.Text = "About";
-            _AboutToolStripMenuItem.Click += _AboutToolStripMenuItem_Click;
-            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -290,8 +299,9 @@
             splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)_FiltersBindingSource).EndInit();
+            ((System.ComponentModel.ISupportInitialize)_DelugeServerBindingSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)_TorrentsView).EndInit();
-            ((System.ComponentModel.ISupportInitialize)DelugeServerBindingSource).EndInit();
             _MenuStrip.ResumeLayout(false);
             _MenuStrip.PerformLayout();
             _ToolStrip.ResumeLayout(false);
@@ -318,7 +328,7 @@
         private TreeView treeView1;
         private DataGridView _TorrentsView;
         private View.TorrentDetailsPanel _TorrentDetailsPanel;
-        private BindingSource DelugeServerBindingSource;
+        private BindingSource _DelugeServerBindingSource;
         private Controls.BindableToolStripStatusLabel _ServerVersionToolStripStatusLabel;
         private System.Windows.Forms.Timer _RefreshTimer;
         private DataGridViewTextBoxColumn _QueueDataGridViewTextBoxColumn;
@@ -329,5 +339,7 @@
         private DataGridViewTextBoxColumn _UploadPayloadRateDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn _ExpectedTimeOfArrivalDataGridViewTextBoxColumn;
         private ToolStripMenuItem _AboutToolStripMenuItem;
+        private View.Accordion _FiltersAccordion;
+        private BindingSource _FiltersBindingSource;
     }
 }
