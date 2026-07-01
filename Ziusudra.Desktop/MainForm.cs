@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -54,6 +55,7 @@ namespace Ziusudra.Desktop
         }
 
         /// <summary>Get or set the current logger.</summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ILogger Logger
         {
             get

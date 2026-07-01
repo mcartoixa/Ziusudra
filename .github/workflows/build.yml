@@ -17,7 +17,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
-    - name: Setup .NET 8.0
+    - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
         global-json-file: global.json
@@ -27,7 +27,7 @@ jobs:
       shell: cmd
       run: |
         CALL .build/SetEnv.bat
-        dotnet.exe msbuild Ziusudra.proj /nologo /t:Release /m /r /fl /flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8 /bl:build.binlog /nr:False
+        dotnet.exe msbuild Ziusudra.proj /nologo /t:Release /m /r /fl /flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8 /bl:build.binlog /nr:False /tl:off
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v7
       with:

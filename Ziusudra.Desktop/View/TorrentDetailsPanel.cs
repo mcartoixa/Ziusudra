@@ -1,4 +1,5 @@
-﻿using Ziusudra.Desktop.ViewModel;
+﻿using System.ComponentModel;
+using Ziusudra.Desktop.ViewModel;
 
 namespace Ziusudra.Desktop.View
 {
@@ -11,6 +12,7 @@ namespace Ziusudra.Desktop.View
             InitializeComponent();
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Torrent? Torrent { get; set; }
     }
 }

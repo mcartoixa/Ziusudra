@@ -1,4 +1,6 @@
-﻿namespace Ziusudra.Desktop
+﻿using System.ComponentModel;
+
+namespace Ziusudra.Desktop
 {
     public partial class DelugeServerEditForm:
         Form
@@ -27,6 +29,7 @@
 
         public ViewModel.DelugeServer DelugeServer => Data.CreateServer();
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ViewModel.DelugeServerEditData Data { get; init; }
     }
 }

@@ -28,7 +28,7 @@ GOTO END
 :: Builds the project
 :: -------------------------------------------------------------------
 :BUILD
-dotnet.exe msbuild %_PROJECT% /nologo /t:%_TARGET% /m /r /fl /flp:logfile=build.log;verbosity=%_VERBOSITY%;encoding=UTF-8 %_LOGGERS% /nr:False /v:normal
+dotnet.exe msbuild %_PROJECT% /nologo /t:%_TARGET% /m /r /fl /flp:logfile=build.log;verbosity=%_VERBOSITY%;encoding=UTF-8 %_LOGGERS% /nr:False /v:normal /tl:on
 IF ERRORLEVEL 1 GOTO END_ERROR
 GOTO END
 

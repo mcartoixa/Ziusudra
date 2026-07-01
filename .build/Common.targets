@@ -12,8 +12,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <UnitTestsSuffix Condition="'$(UnitTestsSuffix)'==''">.Tests</UnitTestsSuffix>
-
     <MSDeployToolPathAvailable>False</MSDeployToolPathAvailable>
     <MSDeployToolPathAvailable Condition="Exists('$(MSDeployToolPath)')">True</MSDeployToolPathAvailable>
   </PropertyGroup>
@@ -23,7 +21,7 @@
   <!-- The following generates dependencies on external tools on NuGet, that can be restored -->
   <PropertyGroup>
     <RestoreGraphProjectInput>$(MSBuildProjectFullPath)</RestoreGraphProjectInput>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" /> <!-- cf. https://docs.microsoft.com/en-us/visualstudio/msbuild/how-to-use-project-sdk -->
@@ -215,7 +213,6 @@
       <_TestProperties Include="VSTestResultsDirectory=$(_VsTestResultsPath)" />
       <_TestProperties Include="VSTestTestAdapterPath=$(_VsTestTestAdapterPath)" />
       <_TestProperties Include="VSTestCollect=XPlat Code Coverage" />
-      <!--_TestProperties Include="VSTestCollect=&quot;XPlat Code Coverage&quot;" /-->
       <_TestProperties Include="VSTestLogger=$(_VsTestLogger)" />
       <_TestProperties Condition="'$(_VsTestRunSettingsPath)' != ''" Include="VSTestSetting=$(_VsTestRunSettingsPath)" />
       <_TestProperties Condition="'$(MSBuildRuntimeType)'!='Core' And '%(TestedProjects.TestProperties)'!=''" Include="%(TestedProjects.TestProperties)" />
