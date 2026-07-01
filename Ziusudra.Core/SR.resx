@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Filter_InvalidFilterData" xml:space="preserve">
+    <value>The filter data is not valid</value>
+  </data>
   <data name="RencodeException_EmptyStream" xml:space="preserve">
     <value>The underlying stream is empty</value>
   </data>

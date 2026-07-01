@@ -61,6 +61,15 @@ namespace Ziusudra {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à The filter data is not valid.
+        /// </summary>
+        internal static string Filter_InvalidFilterData {
+            get {
+                return ResourceManager.GetString("Filter_InvalidFilterData", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à The underlying stream is empty.
         /// </summary>
         internal static string RencodeException_EmptyStream {

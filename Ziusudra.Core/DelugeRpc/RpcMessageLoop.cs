@@ -72,7 +72,7 @@ namespace Ziusudra.DelugeRpc
                     _Logger.LogWarning("Deluge RPC response received without a matching request: {Id}", reply.Id);
             } else if (message is RpcEvent @event)
                 _EventReceived(@event);
-            else
+            else if (_Logger.IsEnabled(LogLevel.Information))
                 _Logger.LogInformation("Deluge RPC message not recognized: {Message}", message.ToDebugString());
         }
 

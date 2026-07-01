@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 
 namespace Ziusudra.DelugeRpc
@@ -77,9 +78,9 @@ namespace Ziusudra.DelugeRpc
         /// <summary>Get a string representation of the immediate frames on the call stack.</summary>
         public override string? StackTrace => Values[4] as string;
 
-        int IExchangeMessage.Id => Convert.ToInt32(Values[1]);
+        int IExchangeMessage.Id => Convert.ToInt32(Values[1], CultureInfo.InvariantCulture);
 
-        RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0]);
+        RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0], CultureInfo.InvariantCulture);
 
         internal IList Values { get; }
 

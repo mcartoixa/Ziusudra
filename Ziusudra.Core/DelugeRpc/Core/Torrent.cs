@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Ziusudra.DelugeRpc.Core
 {
@@ -18,18 +19,18 @@ namespace Ziusudra.DelugeRpc.Core
                 Hash = identifier;
 
             if (values.Contains("active_time"))
-                ActiveTime = TimeSpan.FromSeconds(Convert.ToInt32(values["active_time"]));
+                ActiveTime = TimeSpan.FromSeconds(Convert.ToInt32(values["active_time"], CultureInfo.InvariantCulture));
             if (values.Contains("download_payload_rate"))
-                DownloadPayloadRate = Convert.ToInt32(values["download_payload_rate"]);
+                DownloadPayloadRate = Convert.ToInt32(values["download_payload_rate"], CultureInfo.InvariantCulture);
             if (values.Contains("eta"))
-                ExpectedTimeOfArrival = TimeSpan.FromSeconds(Convert.ToInt32(values["eta"]));
+                ExpectedTimeOfArrival = TimeSpan.FromSeconds(Convert.ToInt32(values["eta"], CultureInfo.InvariantCulture));
             if (values.Contains("name"))
                 Name = values["name"]?.ToString() ?? string.Empty;
             if (values.Contains("progress"))
-                Progress = Convert.ToSingle(values["progress"]) / 100;
+                Progress = Convert.ToSingle(values["progress"], CultureInfo.InvariantCulture) / 100;
             if (values.Contains("queue"))
             {
-                int q = Convert.ToInt32(values["queue"]);
+                int q = Convert.ToInt32(values["queue"], CultureInfo.InvariantCulture);
                 Queue = q >= 0 ? q + 1 : null;
             }
             if (values.Contains("state"))
@@ -41,11 +42,11 @@ namespace Ziusudra.DelugeRpc.Core
                     State = null;
             }
             if (values.Contains("seeding_time"))
-                SeedingTime = TimeSpan.FromSeconds(Convert.ToInt32(values["seeding_time"]));
+                SeedingTime = TimeSpan.FromSeconds(Convert.ToInt32(values["seeding_time"], CultureInfo.InvariantCulture));
             if (values.Contains("total_wanted"))
-                TotalWanted = Convert.ToInt64(values["total_wanted"]);
+                TotalWanted = Convert.ToInt64(values["total_wanted"], CultureInfo.InvariantCulture);
             if (values.Contains("upload_payload_rate"))
-                UploadPayloadRate = Convert.ToInt32(values["upload_payload_rate"]);
+                UploadPayloadRate = Convert.ToInt32(values["upload_payload_rate"], CultureInfo.InvariantCulture);
         }
 
         /// <summary>Gets or sets the active time for the torrent.</summary>

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Globalization;
 
 namespace Ziusudra.DelugeRpc.Events
 {
@@ -15,7 +16,7 @@ namespace Ziusudra.DelugeRpc.Events
         { }
 
         /// <summary>Indicates whether the torrent was loaded from state or if it is a new one.</summary>
-        public bool IsFromState => Convert.ToBoolean(Data[1]);
+        public bool IsFromState => Convert.ToBoolean(Data[1], CultureInfo.InvariantCulture);
         /// <summary>The identifier of the torrent.</summary>
         public string TorrentId => Data[0]?.ToString() ?? string.Empty;
     }

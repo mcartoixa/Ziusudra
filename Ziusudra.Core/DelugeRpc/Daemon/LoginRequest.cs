@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Globalization;
 
 namespace Ziusudra.DelugeRpc.Daemon
 {
@@ -20,7 +21,7 @@ namespace Ziusudra.DelugeRpc.Daemon
             { }
 
             /// <summary>Gets the result of the login operation.</summary>
-            public int AuthenticationLevel => Convert.ToInt32(Values[2]);
+            public int AuthenticationLevel => Convert.ToInt32(Values[2], CultureInfo.InvariantCulture);
         }
 
         /// <summary>Create a new instance of the <see cref="LoginRequest" /> type.</summary>

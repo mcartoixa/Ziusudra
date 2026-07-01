@@ -72,11 +72,12 @@ namespace Ziusudra.DelugeRpc
                 content = await reader.ReadValueAsync(cancellationToken)
                     .ConfigureAwait(false);
             }
-            Logger.LogTrace("Deluge RPC message read: {Message}", MessageExtensions.ToDebugString(content));
+            if (Logger.IsEnabled(LogLevel.Trace))
+                Logger.LogTrace("Deluge RPC message read: {Message}", MessageExtensions.ToDebugString(content));
 
             if (content is not ICollection values)
                 throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_CollectionWasExpected, content?.GetType().ToString() ?? "<null>"));
-            RpcMessageType type = (RpcMessageType)Convert.ToInt32(values.Cast<object?>().FirstOrDefault());
+            RpcMessageType type = (RpcMessageType)Convert.ToInt32(values.Cast<object?>().FirstOrDefault(), CultureInfo.InvariantCulture);
             switch (type)
             {
                 case RpcMessageType.RPC_EVENT:

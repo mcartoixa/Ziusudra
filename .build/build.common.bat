@@ -28,7 +28,7 @@ GOTO END
 :: Builds the project
 :: -------------------------------------------------------------------
 :BUILD
-dotnet.exe msbuild %_PROJECT% /nologo /t:%_TARGET% /m /r /fl /flp:logfile=build.log;verbosity=%_VERBOSITY%;encoding=UTF-8 %_LOGGERS% /nr:False /v:normal /tl:on
+dotnet.exe msbuild %_PROJECT% -nologo -t:%_TARGET% -m -mt -r -fl -flp:logfile=build.log;verbosity=%_VERBOSITY%;encoding=UTF-8 %_LOGGERS% -nr:False -v:normal -tl:on
 IF ERRORLEVEL 1 GOTO END_ERROR
 GOTO END
 
@@ -56,7 +56,7 @@ IF /I "%~1"=="package"              SET _TARGET=Package& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="publish"              SET _TARGET=Publish& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="release"              SET _TARGET=Release& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="build"                SET _TARGET=Build& SHIFT & GOTO ARGS_PARSE
-IF /I "%~1"=="/log"                 SET _VERBOSITY=diagnostic& SET _LOGGERS=/bl:build.binlog& SHIFT & GOTO ARGS_PARSE
+IF /I "%~1"=="/log"                 SET _VERBOSITY=diagnostic& SET _LOGGERS=-bl:build.binlog& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="/NoPause"             SET _NO_PAUSE=1& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="/?"   GOTO SHOW_USAGE
 IF    "%~1" EQU ""  GOTO ARGS_DONE

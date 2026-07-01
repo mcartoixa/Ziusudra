@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Globalization;
 
 namespace Ziusudra.DelugeRpc.Events
 {
@@ -15,8 +16,8 @@ namespace Ziusudra.DelugeRpc.Events
         { }
 
         /// <summary />
-        public int PieceCount => Convert.ToInt32(Data[0]);
+        public int PieceCount => Convert.ToInt32(Data[0], CultureInfo.InvariantCulture);
         /// <summary />
-        public int NumPieces => Convert.ToInt32(Data[1]);
+        public int NumPieces => Convert.ToInt32(Data[1], CultureInfo.InvariantCulture);
     }
 }

@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 
 namespace Ziusudra.DelugeRpc.Core
 {
 
     /// <summary>Represents a filter.</summary>
+    [SuppressMessage("Design", "CA1036:Override methods on comparable types", Justification = "Ordering is exposed only through IComparable for display sorting; comparison operators are not meaningful on a filter.")]
     public class Filter:
         IComparable<Filter>,
         IEquatable<Filter>
@@ -16,19 +18,19 @@ namespace Ziusudra.DelugeRpc.Core
             Category = category;
 
             if (filter.Count != 2)
-                throw new ArgumentException(nameof(filter));
+                throw new ArgumentException(SR.Filter_InvalidFilterData, nameof(filter));
 
             object?[] items = new object?[2];
             filter.CopyTo(items, 0);
 
             if (items[0] is not string value)
-                throw new ArgumentException(nameof(filter));
+                throw new ArgumentException(SR.Filter_InvalidFilterData, nameof(filter));
             Value = value;
 
             object? count = items[1];
             if (count is null || Array.IndexOf(_IntegerTypes, Type.GetTypeCode(count.GetType())) < 0)
-                throw new ArgumentException(nameof(filter));
-            Count = Convert.ToInt32(count);
+                throw new ArgumentException(SR.Filter_InvalidFilterData, nameof(filter));
+            Count = Convert.ToInt32(count, CultureInfo.InvariantCulture);
         }
 
         /// <summary>Determines whether the specified object is equal to the current filter.</summary>
@@ -43,7 +45,7 @@ namespace Ziusudra.DelugeRpc.Core
         {
             if (other is null)
                 return false;
-            return Category.Equals(other.Category) && Value.Equals(other.Value);
+            return Category.Equals(other.Category, StringComparison.Ordinal) && Value.Equals(other.Value, StringComparison.Ordinal);
         }
 
         /// <summary>Returns the hash code for the current filter.</summary>

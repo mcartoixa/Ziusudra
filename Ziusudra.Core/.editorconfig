@@ -1,0 +1,10 @@
+﻿[*.cs]
+dotnet_analyzer_diagnostic.severity = warning
+
+# Performance analyzers not warranted for this protocol library (kept as suggestions):
+# CA1848: LoggerMessage source-generated delegates - over-engineering for this logging volume.
+dotnet_diagnostic.CA1848.severity = suggestion
+# CA1859: concrete types for performance - interface return types are intentional here.
+dotnet_diagnostic.CA1859.severity = suggestion
+# CA1863: cache CompositeFormat - the formatted strings are cold-path exception/trace messages.
+dotnet_diagnostic.CA1863.severity = suggestion

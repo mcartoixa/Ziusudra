@@ -55,7 +55,8 @@ namespace Ziusudra.DelugeRpc
             {
                 using var writer = new Rencode.RencodeStreamWriter(contentStream, true);
                 await writer.WriteValueAsync(request.ToValueCollection(), cancellationToken);
-                Logger.LogTrace("Deluge RPC message written: {0}", request.ToDebugString());
+                if (Logger.IsEnabled(LogLevel.Trace))
+                    Logger.LogTrace("Deluge RPC message written: {Message}", request.ToDebugString());
             }
 
             // Now write the length in the header

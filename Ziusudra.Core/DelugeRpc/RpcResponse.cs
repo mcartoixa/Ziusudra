@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Globalization;
 
 namespace Ziusudra.DelugeRpc
 {
@@ -25,9 +26,9 @@ namespace Ziusudra.DelugeRpc
 
         /// <summary>Gets the identifier of the response.</summary>
         /// <remarks>The identifier is used to match a response with a request that had been sent prior.</remarks>
-        public int Id => Convert.ToInt32(Values[1]);
+        public int Id => Convert.ToInt32(Values[1], CultureInfo.InvariantCulture);
 
-        RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0]);
+        RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0], CultureInfo.InvariantCulture);
 
         /// <summary>Gets the values of the response.</summary>
         internal protected IList Values { get; }

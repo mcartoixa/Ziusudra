@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Globalization;
 
 namespace Ziusudra.DelugeRpc.Events
 {
@@ -17,7 +18,7 @@ namespace Ziusudra.DelugeRpc.Events
         /// <summary>The identifier of the torrent.</summary>
         public string TorrentId => Data[0]?.ToString() ?? string.Empty;
         /// <summary>The index of the file.</summary>
-        public int FileIndex => Convert.ToInt32(Data[1]);
+        public int FileIndex => Convert.ToInt32(Data[1], CultureInfo.InvariantCulture);
         /// <summary>The new file name.</summary>
         public string FileName => Data[2]?.ToString() ?? string.Empty;
     }

@@ -46,7 +46,7 @@ namespace Ziusudra.Rencode
             } else
             {
                 await writer.WriteAsync(new byte[] { CHR_INT }, cancellationToken).ConfigureAwait(false);
-                await writer.WriteAsync(Encoding.ASCII.GetBytes(value.ToString("D")), cancellationToken).ConfigureAwait(false);
+                await writer.WriteAsync(Encoding.ASCII.GetBytes(value.ToString("D", CultureInfo.InvariantCulture)), cancellationToken).ConfigureAwait(false);
                 await writer.WriteAsync(new byte[] { CHR_TERM }, cancellationToken).ConfigureAwait(false);
             }
         }

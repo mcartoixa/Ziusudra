@@ -1,7 +1,10 @@
-﻿namespace Ziusudra.DelugeRpc
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Ziusudra.DelugeRpc
 {
 
     /// <summary>The types of messages sent by the server.</summary>
+    [SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "Members mirror the message type names of the Deluge RPC protocol.")]
     public enum RpcMessageType
     {
         /// <summary>A response to a request sent by the client.</summary>

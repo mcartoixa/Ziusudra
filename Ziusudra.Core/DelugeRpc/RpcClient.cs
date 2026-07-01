@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -39,8 +40,7 @@ namespace Ziusudra.DelugeRpc
         /// <exception cref="RpcServerException">Thrown when an error occured on the server while processing the request.</exception>
         public async ValueTask<IServerReply> SendRequestAsync(IClientRequest request, CancellationToken cancellationToken = default)
         {
-            if (IsDisposed)
-                throw new ObjectDisposedException(nameof(RpcClient));
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             if (_Writer == null)
                 throw new InvalidOperationException(SR.RpcClient_ClientNotStarted);
 
@@ -83,10 +83,10 @@ namespace Ziusudra.DelugeRpc
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <exception cref="InvalidOperationException">Thrown if the client has already been started.</exception>
         /// <exception cref="ObjectDisposedException">Thrown if the client has already been stopped.</exception>
+        [SuppressMessage("Security", "CA5359:Do not disable certificate validation", Justification = "Deluge daemons use a self-signed certificate and the reference client does not validate it; validation is opt-in through RpcClientOptions.CertificateValidationCallback.")]
         public async ValueTask StartAsync(CancellationToken cancellationToken = default)
         {
-            if (IsDisposed)
-                throw new ObjectDisposedException(nameof(RpcClient));
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             if (_MessageLoopTask != null)
                 throw new InvalidOperationException(SR.RpcClient_ClientAlreadyStarted);
 
@@ -116,7 +116,7 @@ namespace Ziusudra.DelugeRpc
                 _ExpectedReplies,
                 @event => OnRpcEventReceived(new RpcEventReceivedEventArgs(@event)),
                 Logger);
-            _MessageLoopTask = Task.Run(() => loop.RunAsync(_CancellationTokenSource.Token));
+            _MessageLoopTask = Task.Run(() => loop.RunAsync(_CancellationTokenSource.Token), _CancellationTokenSource.Token);
         }
 
         /// <summary>Stops the client.</summary>
@@ -159,7 +159,6 @@ namespace Ziusudra.DelugeRpc
         {
             if (Interlocked.Exchange(ref _Disposed, 1) != 0)
                 return;
-            GC.SuppressFinalize(this);
 
             _CancellationTokenSource.Cancel();
             if (_MessageLoopTask != null)
@@ -196,6 +195,7 @@ namespace Ziusudra.DelugeRpc
 
         ValueTask IAsyncDisposable.DisposeAsync()
         {
+            GC.SuppressFinalize(this);
             return DisposeAsyncCore();
         }
 

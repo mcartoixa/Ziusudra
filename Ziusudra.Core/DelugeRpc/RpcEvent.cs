@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Globalization;
 using System.Reflection;
 
 namespace Ziusudra.DelugeRpc
@@ -72,7 +73,7 @@ namespace Ziusudra.DelugeRpc
         /// <summary>Gets the values of the event.</summary>
         protected IList Values { get; }
 
-        RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0]);
+        RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0], CultureInfo.InvariantCulture);
 
         private static readonly Lazy<IEnumerable<Type>> _TypedEventsList = new(InitTypedEventsList);
         private static readonly Lazy<IDictionary<string, Type>> _TypedEventsLookup = new(InitTypedEventsLookup);
