@@ -135,8 +135,14 @@
   <data name="RencodeException_ValueWasExpected" xml:space="preserve">
     <value>A value was expected but non was found</value>
   </data>
+  <data name="RpcClient_ClientAlreadyStarted" xml:space="preserve">
+    <value>The client has already been started</value>
+  </data>
   <data name="RpcClient_ClientNotStarted" xml:space="preserve">
     <value>The client should be started before using it</value>
+  </data>
+  <data name="RpcClient_ConnectionLost" xml:space="preserve">
+    <value>The connection to the server was lost</value>
   </data>
   <data name="RpcClient_CouldNotWaitForAResponse" xml:space="preserve">
     <value>The client could not be set up to wait for a response for this request</value>
@@ -152,5 +158,11 @@
   </data>
   <data name="RpcException_InvalidMessageType" xml:space="preserve">
     <value>The message type {0} is not a proper RPC message type</value>
+  </data>
+  <data name="RpcException_InvalidProtocolVersion" xml:space="preserve">
+    <value>Received invalid protocol version {0}, expected {1}</value>
+  </data>
+  <data name="RpcException_MessageTooLarge" xml:space="preserve">
+    <value>The announced message size {0} exceeds the maximum allowed size {1}</value>
   </data>
 </root>

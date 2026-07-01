@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Ziusudra</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

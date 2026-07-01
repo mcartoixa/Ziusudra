@@ -21,6 +21,7 @@ namespace Ziusudra.DelugeRpc.Core
                 base(reply.ToValueCollection())
             { }
 
+            /// <summary>Gets the filters returned by the server, keyed by category.</summary>
             public IDictionary<string, ICollection<Filter>> Filters => GetFiltersFromValues(Values[2] as IDictionary);
 
             private static IDictionary<string, ICollection<Filter>> GetFiltersFromValues(IDictionary? values)

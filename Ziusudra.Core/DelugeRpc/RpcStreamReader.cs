@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Diagnostics;
+using System.Collections;
 using System.Globalization;
 using System.IO.Compression;
 using Microsoft.Extensions.Logging;
@@ -10,6 +9,7 @@ namespace Ziusudra.DelugeRpc
 
     /// <summary>Read Deluge RPC formatted messages from an underlying <see cref="Stream" />.</summary>
     public sealed class RpcStreamReader:
+        IServerMessageReader,
         IDisposable
     {
 
@@ -43,48 +43,57 @@ namespace Ziusudra.DelugeRpc
         /// <summary>Read the next message from the underlying stream using the Deluge RPC protocol.</summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The message that has been read.</returns>
+        /// <exception cref="EndOfStreamException">Thrown when the underlying stream ends before a complete frame has been read.</exception>
         /// <exception cref="RpcException">Thrown when an error has been detected according to the Deluge RPC protocol.</exception>
         public async ValueTask<IServerMessage> ReadAsync(CancellationToken cancellationToken = default)
         {
-            byte protocol = (await ReadBytesFromStreamAsync(1, cancellationToken).ConfigureAwait(false))[0];
+            byte version = (await ReadExactlyAsync(1, cancellationToken).ConfigureAwait(false))[0];
+            if (version != PROTOCOL_VERSION)
+                throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_InvalidProtocolVersion, version, PROTOCOL_VERSION));
 
-            byte[] buffer = await ReadBytesFromStreamAsync(4, cancellationToken)
+            byte[] header = await ReadExactlyAsync(4, cancellationToken)
                 .ConfigureAwait(false);
             if (BitConverter.IsLittleEndian)
-                Array.Reverse(buffer);
-            uint size = BitConverter.ToUInt32(buffer);
+                Array.Reverse(header);
+            uint size = BitConverter.ToUInt32(header);
+            if (size > (uint)MaxFrameSize)
+                throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_MessageTooLarge, size, MaxFrameSize));
 
-            using (var reader = new Rencode.RencodeStreamReader(new ZLibStream(_Stream, CompressionMode.Decompress, true), true))
+            // Read the whole compressed frame so decompression is bounded to this message
+            // and cannot over-read into the next one on the underlying stream.
+            byte[] body = await ReadExactlyAsync((int)size, cancellationToken)
+                .ConfigureAwait(false);
+
+            object? content;
+            using (var compressed = new MemoryStream(body, false))
+            using (var decompressed = new ZLibStream(compressed, CompressionMode.Decompress))
+            using (var reader = new Rencode.RencodeStreamReader(decompressed, true))
             {
-                var content = await reader.ReadValueAsync(cancellationToken)
+                content = await reader.ReadValueAsync(cancellationToken)
                     .ConfigureAwait(false);
-                Logger.LogTrace("Deluge RPC message read: {0}", MessageExtensions.ToDebugString(content));
-                // TODO: check that size was accurate?
-
-                if (content is not ICollection values)
-                    throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_CollectionWasExpected, content?.GetType().ToString() ?? "<null>"));
-                RpcMessageType type = (RpcMessageType)Convert.ToInt32(values.Cast<object?>().FirstOrDefault());
-                switch (type)
-                {
-                    case RpcMessageType.RPC_EVENT:
-                        return RpcEvent.CreateFromValues(values);
-                    case RpcMessageType.RPC_ERROR:
-                        return RpcServerException.CreateFromValues(values);
-                    case RpcMessageType.RPC_RESPONSE:
-                        return new RpcResponse(values);
-                }
-                throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_InvalidMessageType, type));
             }
+            Logger.LogTrace("Deluge RPC message read: {Message}", MessageExtensions.ToDebugString(content));
+
+            if (content is not ICollection values)
+                throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_CollectionWasExpected, content?.GetType().ToString() ?? "<null>"));
+            RpcMessageType type = (RpcMessageType)Convert.ToInt32(values.Cast<object?>().FirstOrDefault());
+            switch (type)
+            {
+                case RpcMessageType.RPC_EVENT:
+                    return RpcEvent.CreateFromValues(values);
+                case RpcMessageType.RPC_ERROR:
+                    return RpcServerException.CreateFromValues(values);
+                case RpcMessageType.RPC_RESPONSE:
+                    return new RpcResponse(values);
+            }
+            throw new RpcException(string.Format(CultureInfo.CurrentCulture, SR.RpcException_InvalidMessageType, type));
         }
 
-        internal async ValueTask<byte[]> ReadBytesFromStreamAsync(int length, CancellationToken cancellationToken)
+        private async ValueTask<byte[]> ReadExactlyAsync(int length, CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[length];
-            int read = await _Stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-            Debug.Assert(read == buffer.Length);
-            if (read != buffer.Length)
-                throw new RpcException(SR.RencodeException_EmptyStream);
-
+            await _Stream.ReadExactlyAsync(buffer, cancellationToken)
+                .ConfigureAwait(false);
             return buffer;
         }
 
@@ -116,8 +125,18 @@ namespace Ziusudra.DelugeRpc
             }
         }
 
+        /// <summary>Gets or sets the maximum accepted size, in bytes, of a single compressed message frame.</summary>
+        /// <remarks>A frame whose announced size exceeds this value is rejected before any allocation, guarding against a
+        /// corrupt or hostile length prefix. Deluge itself does not cap the frame size.</remarks>
+        public int MaxFrameSize { get; set; } = DefaultMaxFrameSize;
+
         private readonly bool _LeaveOpen;
         private ILogger _Logger = NullLogger.Instance;
         private readonly Stream _Stream;
+
+        /// <summary>The default value of <see cref="MaxFrameSize" />.</summary>
+        public const int DefaultMaxFrameSize = 256 * 1024 * 1024;
+
+        private const byte PROTOCOL_VERSION = 1;
     }
 }

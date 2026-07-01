@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Ziusudra.Rencode.Tests
@@ -7,7 +8,7 @@ namespace Ziusudra.Rencode.Tests
     {
 
         [Fact]
-        public async void WriteAsync_ShouldProperlyEncodeAValue()
+        public async Task WriteAsync_ShouldProperlyEncodeAValue()
         {
             NullEncoder encoder = new();
             byte[] expected = new byte[] { 0x45 };

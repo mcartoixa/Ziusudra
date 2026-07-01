@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Ziusudra.DelugeRpc.Core
@@ -16,29 +15,30 @@ namespace Ziusudra.DelugeRpc.Core
         {
             Category = category;
 
-            Debug.Assert(filter.Count == 2);
-            var enumerator = filter.GetEnumerator();
-            int i = -1;
-            while (enumerator.MoveNext())
-            {
-                i++;
-                if (i == 0)
-                {
-                    if (enumerator.Current is not string v)
-                        throw new ArgumentException(nameof(filter));
-                    Value = v;
-                } else
-                {
-                    if (Array.IndexOf(_IntegerTypes, Type.GetTypeCode(enumerator.Current.GetType())) < 0)
-                        throw new ArgumentException(nameof(filter));
-                    Count = Convert.ToInt32(enumerator.Current);
-                }
+            if (filter.Count != 2)
+                throw new ArgumentException(nameof(filter));
 
-            }
+            object?[] items = new object?[2];
+            filter.CopyTo(items, 0);
+
+            if (items[0] is not string value)
+                throw new ArgumentException(nameof(filter));
+            Value = value;
+
+            object? count = items[1];
+            if (count is null || Array.IndexOf(_IntegerTypes, Type.GetTypeCode(count.GetType())) < 0)
+                throw new ArgumentException(nameof(filter));
+            Count = Convert.ToInt32(count);
         }
 
+        /// <summary>Determines whether the specified object is equal to the current filter.</summary>
+        /// <param name="obj">The object to compare with the current filter.</param>
+        /// <returns><c>true</c> if the specified object is equal to the current filter; or else <c>false</c>.</returns>
         public override bool Equals(object? obj) => Equals(obj as Filter);
 
+        /// <summary>Determines whether the specified filter is equal to the current filter.</summary>
+        /// <param name="other">The filter to compare with the current filter.</param>
+        /// <returns><c>true</c> if the specified filter is equal to the current filter; or else <c>false</c>.</returns>
         public bool Equals(Filter? other)
         {
             if (other is null)
@@ -46,6 +46,8 @@ namespace Ziusudra.DelugeRpc.Core
             return Category.Equals(other.Category) && Value.Equals(other.Value);
         }
 
+        /// <summary>Returns the hash code for the current filter.</summary>
+        /// <returns>The hash code for the current filter.</returns>
         public override int GetHashCode() => Tuple.Create(Category, Value).GetHashCode();
 
         int IComparable<Filter>.CompareTo(Filter? other)
@@ -55,6 +57,10 @@ namespace Ziusudra.DelugeRpc.Core
             return ((IComparable)Tuple.Create(Category, Value)).CompareTo(Tuple.Create(other.Category, other.Value));
         }
 
+        /// <summary>Determines whether two filters are equal.</summary>
+        /// <param name="filter1">The first filter to compare.</param>
+        /// <param name="filter2">The second filter to compare.</param>
+        /// <returns><c>true</c> if the filters are equal; or else <c>false</c>.</returns>
         public static bool operator ==(Filter? filter1, Filter? filter2)
         {
             if (filter1 is null)
@@ -62,6 +68,10 @@ namespace Ziusudra.DelugeRpc.Core
             return filter1.Equals(filter2);
         }
 
+        /// <summary>Determines whether two filters are different.</summary>
+        /// <param name="filter1">The first filter to compare.</param>
+        /// <param name="filter2">The second filter to compare.</param>
+        /// <returns><c>true</c> if the filters are different; or else <c>false</c>.</returns>
         public static bool operator !=(Filter? filter1, Filter? filter2)
         {
             if (filter1 is null)
@@ -69,10 +79,13 @@ namespace Ziusudra.DelugeRpc.Core
             return !filter1.Equals(filter2);
         }
 
+        /// <summary>Gets or sets the category of the filter.</summary>
         public string Category { get; set; }
 
+        /// <summary>Gets or sets the value of the filter.</summary>
         public required string Value { get; set; }
 
+        /// <summary>Gets or sets the number of torrents matching the filter.</summary>
         public int? Count { get; set; }
 
         private static readonly TypeCode[] _IntegerTypes = {

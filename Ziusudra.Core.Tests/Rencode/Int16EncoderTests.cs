@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Ziusudra.Rencode.Tests
@@ -13,7 +14,7 @@ namespace Ziusudra.Rencode.Tests
         [InlineData(-5, new byte[] { 0x4A })]
         [InlineData(46, new byte[] { 0x3E, 0x2E })]
         [InlineData(-47, new byte[] { 0x3E, 0xD1 })]
-        public async void WriteAsync_ShouldProperlyEncodeAValue(short value, byte[] expected)
+        public async Task WriteAsync_ShouldProperlyEncodeAValue(short value, byte[] expected)
         {
             Int16Encoder encoder = new();
             FakeMemoryStreamWriter writer = new();

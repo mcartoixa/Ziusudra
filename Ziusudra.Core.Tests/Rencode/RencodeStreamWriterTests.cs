@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Ziusudra.Rencode.Tests
@@ -33,7 +34,7 @@ namespace Ziusudra.Rencode.Tests
                 0x61, 0x73, 0x64, 0x66, 0x38, 0x39, 0x36, 0x37, 0x68, 0x6A, 0x61, 0x73, 0x66, 0x38, 0x39, 0x68, 0x36, 0x64, 0x66, 0x37 }
         )]
         [InlineData(new object[] { 1, "a", true }, new byte[] { 0xC3, 0x01, 0x81, 0x61, 0x43 })]
-        public async void WriteAsync_ShouldProperlyEncodeGivenValue(object? value, byte[] expected)
+        public async Task WriteAsync_ShouldProperlyEncodeGivenValue(object? value, byte[] expected)
         {
             MemoryStream ms = new();
             RencodeStreamWriter writer = new(ms, true);

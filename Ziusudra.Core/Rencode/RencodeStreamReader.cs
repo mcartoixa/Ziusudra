@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace Ziusudra.Rencode
 {
@@ -73,13 +72,12 @@ namespace Ziusudra.Rencode
             int read = 0;
             while (read < length)
             {
-                Memory<byte> buffer = new(ret, read, length - read);
-                read += await _Stream.ReadAsync(buffer, cancellationToken)
+                int count = await _Stream.ReadAsync(ret.AsMemory(read, length - read), cancellationToken)
                     .ConfigureAwait(false);
+                if (count == 0)
+                    throw new RencodeException(SR.RencodeException_EmptyStream);
+                read += count;
             }
-            Debug.Assert(read == ret.Length);
-            if (read != ret.Length)
-                throw new RencodeException(SR.RencodeException_EmptyStream);
 
             return ret;
         }

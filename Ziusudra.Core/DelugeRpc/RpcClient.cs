@@ -1,7 +1,8 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -16,15 +17,17 @@ namespace Ziusudra.DelugeRpc
 
         /// <summary>Create a new instance of the <see cref="RpcClient" /> class.</summary>
         /// <param name="host">The server to communicate with.</param>
-        public RpcClient(IPEndPoint host)
+        public RpcClient(IPEndPoint host):
+            this(host, null)
+        { }
+
+        /// <summary>Create a new instance of the <see cref="RpcClient" /> class.</summary>
+        /// <param name="host">The server to communicate with.</param>
+        /// <param name="options">The options that configure the client, or <c>null</c> to use the defaults.</param>
+        public RpcClient(IPEndPoint host, RpcClientOptions? options)
         {
             _Host = host;
-        }
-
-        /// <summary>Finalizer.</summary>
-        ~RpcClient()
-        {
-            Dispose(false);
+            _Options = options ?? new RpcClientOptions();
         }
 
         /// <summary>Sends the specified <paramref name="request" /> to the server.</summary>
@@ -36,12 +39,12 @@ namespace Ziusudra.DelugeRpc
         /// <exception cref="RpcServerException">Thrown when an error occured on the server while processing the request.</exception>
         public async ValueTask<IServerReply> SendRequestAsync(IClientRequest request, CancellationToken cancellationToken = default)
         {
-            if (_IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException(nameof(RpcClient));
             if (_Writer == null)
                 throw new InvalidOperationException(SR.RpcClient_ClientNotStarted);
 
-            TaskCompletionSource<IServerReply> requestTask = new();
+            TaskCompletionSource<IServerReply> requestTask = new(TaskCreationOptions.RunContinuationsAsynchronously);
             if (!_ExpectedReplies.TryAdd(request.Id, requestTask))
                 throw new InvalidOperationException(SR.RpcClient_CouldNotWaitForAResponse);
             try
@@ -55,8 +58,8 @@ namespace Ziusudra.DelugeRpc
             }
 
             using CancellationTokenRegistration ctr = cancellationToken.Register(() => {
-                _ExpectedReplies.TryRemove(request.Id, out _);
-                cancellationToken.ThrowIfCancellationRequested();
+                if (_ExpectedReplies.TryRemove(request.Id, out TaskCompletionSource<IServerReply>? task))
+                    task.TrySetCanceled(cancellationToken);
             });
             return await requestTask.Task
                 .ConfigureAwait(false);
@@ -78,21 +81,24 @@ namespace Ziusudra.DelugeRpc
 
         /// <summary>Starts the client.</summary>
         /// <param name="cancellationToken">The cancellation token.</param>
+        /// <exception cref="InvalidOperationException">Thrown if the client has already been started.</exception>
         /// <exception cref="ObjectDisposedException">Thrown if the client has already been stopped.</exception>
         public async ValueTask StartAsync(CancellationToken cancellationToken = default)
         {
-            if (_IsDisposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException(nameof(RpcClient));
+            if (_MessageLoopTask != null)
+                throw new InvalidOperationException(SR.RpcClient_ClientAlreadyStarted);
 
             Socket socket = new(_Host.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             await socket.ConnectAsync(_Host, cancellationToken)
                 .ConfigureAwait(false);
 
             NetworkStream ns = new(socket, true);
-            _Stream = new SslStream(ns, true);
+            _Stream = new SslStream(ns, false);
             await _Stream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions() {
-                CertificateRevocationCheckMode = System.Security.Cryptography.X509Certificates.X509RevocationMode.NoCheck,
-                RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true, // Do not validate certificates
+                CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                RemoteCertificateValidationCallback = _Options.CertificateValidationCallback ?? AcceptAnyCertificate,
                 TargetHost = _Host.Address.ToString()
             }, cancellationToken)
                 .ConfigureAwait(false);
@@ -100,14 +106,28 @@ namespace Ziusudra.DelugeRpc
             _Writer = new RpcStreamWriter(_Stream, true) {
                 Logger = Logger
             };
+            _Reader = new RpcStreamReader(_Stream, true) {
+                Logger = Logger,
+                MaxFrameSize = _Options.MaxFrameSize
+            };
 
-            _MessageLoopTask = Task.Run(() => ReceiveMessagesLoopAsync(_CancellationTokenSource.Token));
+            RpcMessageLoop loop = new(
+                _Reader,
+                _ExpectedReplies,
+                @event => OnRpcEventReceived(new RpcEventReceivedEventArgs(@event)),
+                Logger);
+            _MessageLoopTask = Task.Run(() => loop.RunAsync(_CancellationTokenSource.Token));
         }
 
         /// <summary>Stops the client.</summary>
         public ValueTask StopAsync()
         {
-            return DisposeAsync();
+            return DisposeAsyncCore();
+        }
+
+        private static bool AcceptAnyCertificate(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
 
         private void OnRpcEventReceived(RpcEventReceivedEventArgs e)
@@ -115,74 +135,19 @@ namespace Ziusudra.DelugeRpc
             RpcEventReceived?.Invoke(this, e);
         }
 
-        private async ValueTask ReceiveMessagesLoopAsync(CancellationToken cancellationToken)
+        private void FaultPendingReplies(Exception exception)
         {
-            try
-            {
-                if (_IsDisposed)
-                    throw new ObjectDisposedException(nameof(RpcClient));
-                if (_Stream == null)
-                    throw new InvalidOperationException(SR.RpcClient_ClientNotStarted);
-                if (_Reader == null)
-                    _Reader = new RpcStreamReader(_Stream, true) {
-                        Logger = Logger
-                    };
-
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    try
-                    {
-                        IServerMessage message = await _Reader.ReadAsync(cancellationToken)
-                            .ConfigureAwait(false);
-                        if (message is IServerReply reply)
-                        {
-                            if (_ExpectedReplies.TryRemove(reply.Id, out TaskCompletionSource<IServerReply>? requestTask))
-                            {
-                                if (reply is RpcServerException error)
-                                    requestTask.TrySetException(error);
-                                else
-                                    requestTask.TrySetResult(reply);
-                            }  else
-                                Logger.LogWarning("Deluge RPC response received without request: {0}", reply.Id);
-                        } else if (message is RpcEvent @event)
-                            OnRpcEventReceived(new RpcEventReceivedEventArgs(@event));
-                        else
-                            Logger.LogInformation("Deluge RPC message not recognized: {0}", message.ToDebugString());
-                    } catch (OperationCanceledException)
-                    {
-                        throw;
-                    } catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Deluge RPC error occured while receiving messages");
-                    }
-                }
-            } catch (OperationCanceledException)
-            { }
+            foreach (int id in _ExpectedReplies.Keys)
+                if (_ExpectedReplies.TryRemove(id, out TaskCompletionSource<IServerReply>? requestTask))
+                    requestTask.TrySetException(exception);
         }
 
-        private void Dispose()
+        private void Cleanup()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            FaultPendingReplies(new ObjectDisposedException(nameof(RpcClient)));
 
-        private void Dispose(bool disposing)
-        {
-            if (disposing && !_IsDisposed)
-            {
-                _CancellationTokenSource.Dispose();
-                _ExpectedReplies.Clear();
-
-                if (_Reader != null)
-                    _Reader.Close();
-                if (_Writer != null)
-                    _Writer.Close();
-
-                if (_Stream != null)
-                    _Stream.Dispose();
-
-                _IsDisposed = true;
-            }
+            _Reader?.Close();
+            _Writer?.Close();
 
             _MessageLoopTask = null;
             _Reader = null;
@@ -190,36 +155,48 @@ namespace Ziusudra.DelugeRpc
             _Writer = null;
         }
 
-        private async ValueTask DisposeAsync()
+        private async ValueTask DisposeAsyncCore()
         {
-            if (!_IsDisposed) 
+            if (Interlocked.Exchange(ref _Disposed, 1) != 0)
+                return;
+            GC.SuppressFinalize(this);
+
+            _CancellationTokenSource.Cancel();
+            if (_MessageLoopTask != null)
             {
-                if (_MessageLoopTask != null)
+                try
                 {
-                    _CancellationTokenSource.Cancel();
                     await _MessageLoopTask
                         .ConfigureAwait(false);
-                }
-
-                if (_Stream != null)
-                {
-                    await _Stream.DisposeAsync()
-                        .ConfigureAwait(false);
-                }
+                } catch
+                { }
             }
+            if (_Stream != null)
+                await _Stream.DisposeAsync()
+                    .ConfigureAwait(false);
 
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            Cleanup();
+            // Safe to dispose now that the loop has been awaited and no longer touches the token.
+            _CancellationTokenSource.Dispose();
         }
 
         void IDisposable.Dispose()
         {
-            Dispose();
+            if (Interlocked.Exchange(ref _Disposed, 1) != 0)
+                return;
+            GC.SuppressFinalize(this);
+
+            // Cancel and dispose the stream so the message loop's pending read unblocks and the loop exits.
+            // The synchronous path cannot await the loop, unlike DisposeAsync.
+            _CancellationTokenSource.Cancel();
+            _Stream?.Dispose();
+
+            Cleanup();
         }
 
         ValueTask IAsyncDisposable.DisposeAsync()
         {
-            return DisposeAsync();
+            return DisposeAsyncCore();
         }
 
         /// <summary>Get or set the current logger.</summary>
@@ -245,12 +222,15 @@ namespace Ziusudra.DelugeRpc
         /// <summary>Event triggered when an RPC event is received from the server.</summary>
         public event EventHandler<RpcEventReceivedEventArgs>? RpcEventReceived;
 
+        private bool IsDisposed => Volatile.Read(ref _Disposed) != 0;
+
         private readonly CancellationTokenSource _CancellationTokenSource = new();
+        private int _Disposed;
         private readonly ConcurrentDictionary<int, TaskCompletionSource<IServerReply>> _ExpectedReplies = new();
-        private IPEndPoint _Host;
-        private bool _IsDisposed;
+        private readonly IPEndPoint _Host;
         private ILogger _Logger = NullLogger.Instance;
         private Task? _MessageLoopTask;
+        private readonly RpcClientOptions _Options;
         private RpcStreamReader? _Reader;
         private SslStream? _Stream;
         private RpcStreamWriter? _Writer;

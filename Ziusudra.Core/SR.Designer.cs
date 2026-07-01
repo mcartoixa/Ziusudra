@@ -115,6 +115,15 @@ namespace Ziusudra {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à The client has already been started.
+        /// </summary>
+        internal static string RpcClient_ClientAlreadyStarted {
+            get {
+                return ResourceManager.GetString("RpcClient_ClientAlreadyStarted", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à The client should be started before using it.
         /// </summary>
         internal static string RpcClient_ClientNotStarted {
@@ -129,6 +138,15 @@ namespace Ziusudra {
         internal static string RpcClient_CouldNotWaitForAResponse {
             get {
                 return ResourceManager.GetString("RpcClient_CouldNotWaitForAResponse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The connection to the server was lost.
+        /// </summary>
+        internal static string RpcClient_ConnectionLost {
+            get {
+                return ResourceManager.GetString("RpcClient_ConnectionLost", resourceCulture);
             }
         }
         
@@ -165,6 +183,24 @@ namespace Ziusudra {
         internal static string RpcException_InvalidMessageType {
             get {
                 return ResourceManager.GetString("RpcException_InvalidMessageType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Received invalid protocol version {0}, expected {1}.
+        /// </summary>
+        internal static string RpcException_InvalidProtocolVersion {
+            get {
+                return ResourceManager.GetString("RpcException_InvalidProtocolVersion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The announced message size {0} exceeds the maximum allowed size {1}.
+        /// </summary>
+        internal static string RpcException_MessageTooLarge {
+            get {
+                return ResourceManager.GetString("RpcException_MessageTooLarge", resourceCulture);
             }
         }
     }

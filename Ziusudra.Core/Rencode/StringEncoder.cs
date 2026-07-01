@@ -56,8 +56,8 @@ namespace Ziusudra.Rencode
         {
             byte[] content = Encoding.UTF8.GetBytes(value);
 
-            byte[] header = value.Length < FIXED_COUNT ?
-                new byte[] { (byte)(FIXED_START + value.Length) } :
+            byte[] header = content.Length < FIXED_COUNT ?
+                new byte[] { (byte)(FIXED_START + content.Length) } :
                 Encoding.ASCII.GetBytes(
                     string.Format(
                         CultureInfo.InvariantCulture,

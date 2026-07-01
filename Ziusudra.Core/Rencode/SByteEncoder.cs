@@ -25,7 +25,7 @@
                 return (sbyte)((sbyte)header - POS_FIXED_START);
             } else if (header >= NEG_FIXED_START && header < NEG_FIXED_START + NEG_FIXED_COUNT)
             {
-                return (sbyte)((sbyte)header + NEG_FIXED_START);
+                return (sbyte)(NEG_FIXED_START - 1 - header);
             }
 
             throw new RencodeException("Invalid value");
