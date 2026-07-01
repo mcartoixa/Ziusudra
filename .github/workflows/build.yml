@@ -16,7 +16,7 @@ jobs:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
     - name: Setup .NET 8.0
       uses: actions/setup-dotnet@v5
       with:
@@ -29,21 +29,21 @@ jobs:
         CALL .build/SetEnv.bat
         dotnet.exe msbuild Ziusudra.proj /nologo /t:Release /m /r /fl /flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8 /bl:build.binlog /nr:False
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v7
       with:
         directory: tmp/
         files: Ziusudra-cobertura-results.xml
         flags: unittests
         fail_ci_if_error: false
     - name: Archive artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: outputs
         path: |
           tmp/out/bin/**.*
     - name: Archive logs
       if: ${{ always() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: logs
         path: |

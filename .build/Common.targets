@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <!-- Output paths -->
   <PropertyGroup>
-    <BuildInputPath>$(MSBuildProjectDirectory)\</BuildInputPath>
-    <DirectoryBuildPropsPath>$(MSBuildThisFileDirectory)Directory.Build.props</DirectoryBuildPropsPath>
+    <CustomBeforeDirectoryBuildProps Condition="'$(CustomBeforeDirectoryBuildProps)'==''">$(MSBuildThisFileDirectory)Directory.Build.props</CustomBeforeDirectoryBuildProps>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PublishFilterSuffix Condition="'$(PublishFilterSuffix)'==''">.publish</PublishFilterSuffix>
+    <TestFilterSuffix Condition="'$(TestFilterSuffix)'==''">.test</TestFilterSuffix>
+    <TestsNamespaceSuffix Condition="'$(TestsNamespaceSuffix)'==''">.Tests</TestsNamespaceSuffix>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -25,23 +29,32 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" /> <!-- cf. https://docs.microsoft.com/en-us/visualstudio/msbuild/how-to-use-project-sdk -->
 
   <ItemGroup>
-    <PackageReference Include="ReportGenerator" Version="5.4.17" />
+    <PackageReference Include="ReportGenerator" Version="5.5.10" />
   </ItemGroup>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" /> <!-- cf. https://docs.microsoft.com/en-us/visualstudio/msbuild/how-to-use-project-sdk -->
 
+  <ItemGroup>
+    <_CommonProjectProperties Include="BaseBuildInputPath=$(BuildInputPath)" />
+    <_CommonProjectProperties Include="BaseBuildOutputPath=$(BuildOutputPath)" />
+    <_CommonProjectProperties Include="CustomBeforeDirectoryBuildProps=$(CustomBeforeDirectoryBuildProps)" />
+    <_CommonProjectProperties Condition="'$(RestoreConfigFile)'!=''" Include="RestoreConfigFile=$(RestoreConfigFile)" />
+  </ItemGroup>
+
 
 
   <!-- Prepare -->
-  <Target Name="Prepare" DependsOnTargets="Restore">
-    <MakeDir Directories="$(BaseBuildOutputPath)" />
+  <Target Name="Prepare" DependsOnTargets="PrepareDirectories" />
+
+  <Target Name="PrepareDirectories">
+    <MakeDir Directories="$(BuildOutputPath)" />
   </Target>
 
 
 
   <!-- Clean -->
   <Target Name="Clean">
-    <RemoveDir Directories="$(BaseBuildOutputPath)" />
+    <RemoveDir Directories="$(BuildBinaryArtefactsOutputPath);$(BuildTestArtefactsOutputPath);$(BuildPublishArtefactsOutputPath);$(BuildOutputPath)" />
   </Target>
 
   <Target Name="CleanProjects">
@@ -69,6 +82,18 @@
 
 
 
+  <!-- Restore -->
+  <Target Name="RestoreProjects" AfterTargets="Restore">
+    <MSBuild
+      Projects="%(Projects.Identity)"
+      RebaseOutputs="True"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);@(_CommonProjectProperties);%(Projects.Properties)"
+      Targets="Restore"
+    />
+  </Target>
+
+
+
   <!-- Compile -->
   <Target Name="Compile" DependsOnTargets="Prepare;CompileProject" />
 
@@ -76,7 +101,7 @@
     <MSBuild
       Projects="%(Projects.Identity)"
       RebaseOutputs="True"
-      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);DirectoryBuildPropsPath=$(DirectoryBuildPropsPath);%(Projects.Properties)"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);@(_CommonProjectProperties);%(Projects.Properties)"
       Targets="Restore;Build"
     />
   </Target>
@@ -84,88 +109,174 @@
 
 
   <!-- Test -->
-  <Target Name="Test" DependsOnTargets="Prepare;TestProject;GenerateTestReports" />
+  <Target Name="Test" DependsOnTargets="Compile;TestProjects;GenerateTestReports" />
 
-  <Target Name="_GetTestProjects"
-    Returns="@(TestProjects)"
-    BeforeTargets="TestProject"
+  <!-- If we use solutions (or solution filters), then tests results will be overwritten for each individual project.
+        We need to find out individual projects to test them one by one. -->
+  <Target Name="_GetTestedProjects"
+    DependsOnTargets="_GetTestedProjectsFromFilters"
+    Returns="@(TestedProjects)"
+  >
+    <!-- Get all individual projects if no solution filter exists.
+         If one solution exists with no solution filter all the projects will be drawn in. -->
+    <ItemGroup>
+      <_TestedProjects
+        Include="**\%(Projects.Filename)$(TestsNamespaceSuffix)%(Projects.Extension)"
+        Condition="!Exists('%(Projects.RelativeDir)%(Projects.Filename)$(TestFilterSuffix).slnf')"
+      >
+        <Configuration>%(Projects.Configuration)</Configuration>
+        <Platform>%(Projects.Platform)</Platform>
+        <TestProperties Condition="'$(MSBuildRuntimeType)'!='Core'">%(Projects.TestProperties)</TestProperties>
+      </_TestedProjects>
+    </ItemGroup>
+
+    <RemoveDuplicates Inputs="@(_TestedProjects)">
+      <Output TaskParameter="Filtered" ItemName="TestedProjects" />
+    </RemoveDuplicates>
+  </Target>
+
+  <Target Name="_GetTestProjectsWithFilters" 
+    Returns="@(_TestProjectsWithFilter)"
   >
     <ItemGroup>
-      <TestProjects Include="$(BuildInputPath)**\*$(UnitTestsSuffix).csproj" Exclude="$(BaseBuildOutputPath)**\*.*" />
+      <_TestProjectsWithFilter Include="@(Projects)" Condition="Exists('%(Projects.RelativeDir)%(Projects.Filename)$(TestFilterSuffix).slnf')">
+        <FilteredProject>%(Projects.RelativeDir)%(Projects.Filename)$(TestFilterSuffix).slnf</FilteredProject>
+      </_TestProjectsWithFilter>
     </ItemGroup>
+  </Target>
+
+  <Target Name="_GetTestedProjectsFromFilters"
+    DependsOnTargets="_GetTestProjectsWithFilters"
+    Outputs="%(_TestProjectsWithFilter.RelativeDir)/dummy.txt"
+    Returns="@(_TestedProjects)"
+  >
+    <PropertyGroup>
+      <_TestProjectsWithFilterConfiguration>%(_TestProjectsWithFilter.TestConfiguration)</_TestProjectsWithFilterConfiguration>
+      <_TestProjectsWithFilterConfiguration Condition="'$(_TestProjectsWithFilterConfiguration)'==''">%(_TestProjectsWithFilter.Configuration)</_TestProjectsWithFilterConfiguration>
+      <_TestProjectsWithFilterPlatform>%(_TestProjectsWithFilter.Platform)</_TestProjectsWithFilterPlatform>
+      <_TestProjectsWithFilterTestProperties Condition="'$(MSBuildRuntimeType)'!='Core'">%(_TestProjectsWithFilter.TestProperties)</_TestProjectsWithFilterTestProperties>
+    </PropertyGroup>
+
+    <!-- Manual parsing of each solution filter file... -->
+    <ReadLinesFromFile Condition="'@(_TestProjectsWithFilter)'!=''" File="%(_TestProjectsWithFilter.FilteredProject)">
+      <Output TaskParameter="Lines" ItemName="_TestProjectsWithFilterLines" />
+    </ReadLinesFromFile>
+    <ItemGroup>
+      <_TestedProjectsWithFilterProjects
+        Include="@(_TestProjectsWithFilterLines)"
+        Condition="$([System.String]::Copy('%(_TestProjectsWithFilterLines.Identity)').Trim().TrimEnd(',').Trim('&quot;').EndsWith('.csproj'))"
+      >
+        <ProjectPath>$([System.String]::Copy('%(_TestProjectsWithFilterLines.Identity)').Trim().TrimEnd(',').Trim('&quot;').Replace('\\', '\'))</ProjectPath>
+      </_TestedProjectsWithFilterProjects>
+
+      <_TestedProjects Include="%(_TestedProjectsWithFilterProjects.ProjectPath)">
+        <Configuration>$(_TestProjectsWithFilterConfiguration)</Configuration>
+        <Platform>$(_TestProjectsWithFilterPlatform)</Platform>
+        <TestProperties Condition="'$(MSBuildRuntimeType)'!='Core'">$(_TestProjectsWithFilterTestProperties)</TestProperties>
+      </_TestedProjects>
+    </ItemGroup>
+  </Target>
+
+  <!-- Split the target in 2 so that the condition can be evaluated -->
+  <Target Name="TestProjects" DependsOnTargets="_GetTestedProjects" />
+  <Target Name="_TestProjects"
+    Condition="'@(TestedProjects)'!=''"
+    AfterTargets="TestProjects"
+    Inputs="@(TestedProjects)"
+    Outputs="$(BuildTestIntermediateOutputPath)results\%(TestedProjects.Filename)\dummy.xml"
+  >
+    <PropertyGroup>
+      <_MSBuildTestTargets Condition="'$(MSBuildRuntimeType)'=='Core'">Restore;Build;VSTest</_MSBuildTestTargets>
+      <_MSBuildTestTargets Condition="'$(MSBuildRuntimeType)'!='Core'">Restore;Build</_MSBuildTestTargets>
+    </PropertyGroup>
+    <ItemGroup>
+      <_VsTestLoggers Include="xunit" /> <!-- Don't forget to reference XunitXml.TestLogger in the test projects... -->
+      <_VsTestLoggers Condition="'$(VSTEST_LOGGER)'!=''" Include="$(VSTEST_LOGGER)" />
+      <_VsTestTestAdapterPaths Include="$(BuildInputPath)" />
+      <_VsTestTestAdapterPaths Condition="'$(VSTEST_TESTADAPTERPATH)'!=''" Include="$(VSTEST_TESTADAPTERPATH)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_VsTestResultsPath>$(BuildTestIntermediateOutputPath)results\%(TestedProjects.Filename)\</_VsTestResultsPath>
+      <_VsTestLogger>@(_VsTestLoggers->'%(Identity)')</_VsTestLogger>
+      <_VsTestTestAdapterPath>@(_VsTestTestAdapterPaths->'%(Identity)')</_VsTestTestAdapterPath>
+      <_VsTestRunSettingsPath Condition="Exists('$(BuildInputPath)$(MSBuildProjectName)$(TestsNamespaceSuffix).runsettings')">$(BuildInputPath)$(MSBuildProjectName)$(TestsNamespaceSuffix).runsettings</_VsTestRunSettingsPath>
+      <_VsTestRunSettingsCliArg Condition="'$(_VsTestRunSettingsPath)'!=''"> --settings &quot;$(_VsTestRunSettingsPath)&quot;</_VsTestRunSettingsCliArg>
+      <_VsTestBaseBuildOutputPath Condition="'$(MSBuildRuntimeType)'!='Core'">BaseBuildOutputPath=$(BuildObjectsIntermediateOutputPath);</_VsTestBaseBuildOutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_TestProperties Include="@(_CommonProjectProperties)" />
+      <_TestProperties Include="VsTestUseMSBuildOutput=True" />
+      <_TestProperties Include="IsTestProject=True" />
+      <_TestProperties Include="VSTestNoLogo=True" />
+      <_TestProperties Condition="'$(MSBuildRuntimeType)'=='Core'" Include="VSTestNoBuild=False" />
+      <_TestProperties Condition="'$(MSBuildRuntimeType)'!='Core'" Include="VSTestNoBuild=True" />
+      <_TestProperties Include="VSTestBlame=True" />
+      <_TestProperties Include="VSTestVerbosity=normal" />
+      <_TestProperties Include="VSTestResultsDirectory=$(_VsTestResultsPath)" />
+      <_TestProperties Include="VSTestTestAdapterPath=$(_VsTestTestAdapterPath)" />
+      <_TestProperties Include="VSTestCollect=XPlat Code Coverage" />
+      <!--_TestProperties Include="VSTestCollect=&quot;XPlat Code Coverage&quot;" /-->
+      <_TestProperties Include="VSTestLogger=$(_VsTestLogger)" />
+      <_TestProperties Condition="'$(_VsTestRunSettingsPath)' != ''" Include="VSTestSetting=$(_VsTestRunSettingsPath)" />
+      <_TestProperties Condition="'$(MSBuildRuntimeType)'!='Core' And '%(TestedProjects.TestProperties)'!=''" Include="%(TestedProjects.TestProperties)" />
+    </ItemGroup>
+
+    <RemoveDir Directories="$(_VSTestResultsPath)" />
+    <MSBuild
+      Projects="%(TestedProjects.Identity)"
+      RebaseOutputs="True"
+      Properties="Configuration=%(TestedProjects.Configuration);Platform=%(TestedProjects.Platform);CustomBeforeDirectoryBuildProps=$(CustomBeforeDirectoryBuildProps);$(_VsTestBaseBuildOutputPath)@(_TestProperties)"
+      Targets="$(_MSBuildTestTargets)"
+    />
+
+    <!-- Testing .NET under .NET Framework is hard... -->
+    <ItemGroup>
+      <_TestedProjectProperties Condition="'$(MSBuildRuntimeType)'!='Core' And '%(TestedProjects.TestProperties)'!=''" Include="%(TestedProjects.TestProperties)" />
+    </ItemGroup>
+    <Exec
+      Condition="'$(MSBuildRuntimeType)'!='Core'"
+      Command="dotnet msbuild &quot;%(TestedProjects.Identity)&quot; /t:VSTest /restore:false /p:Configuration=%(TestedProjects.Configuration) /p:Platform=&quot;%(TestedProjects.Platform)&quot; /p:BaseBuildOutputPath=&quot;$(BuildObjectsIntermediateOutputPath).&quot; /p:CustomBeforeDirectoryBuildProps=&quot;$(CustomBeforeDirectoryBuildProps)&quot;@(_TestProperties->' /p:%(Identity)', '')$(_VsTestRunSettingsCliArg)"
+      YieldDuringToolExecution="True"
+    />
+
+    <OnError ExecuteTargets="_CopyTestResults" />
+  </Target>
+
+  <Target Name="_CopyTestResults"
+    Outputs="$(BuildTestArtefactsOutputPath)%(TestedProjects.Filename)-xunit-results.xml"
+    AfterTargets="TestProjects"
+  >
+    <MakeDir Directories="$(BuildTestArtefactsOutputPath)" />
+    <Copy
+      Condition="Exists('$(BuildTestIntermediateOutputPath)results\%(TestedProjects.Filename)\TestResults.xml')"
+      SourceFiles="$(BuildTestIntermediateOutputPath)results\%(TestedProjects.Filename)\TestResults.xml"
+      DestinationFiles="$(BuildTestArtefactsOutputPath)%(TestedProjects.Filename)-xunit-results.xml"
+    />
   </Target>
 
   <Target Name="_GetCoverageResults"
     Returns="@(CoverageResults)"
-    BeforeTargets="GenerateTestReports"
   >
     <ItemGroup>
       <CoverageResults Include="$(BuildTestIntermediateOutputPath)results\**\coverage.cobertura.xml" />
     </ItemGroup>
   </Target>
 
-  <Target Name="TestProject"
-    Outputs="$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
-    DependsOnTargets="_GetTestProjects"
-  >
-    <!--  Using solutions for unit tests won't work: https://github.com/Microsoft/vstest/issues/411
-          Redirecting intermediates won't work either: https://github.com/dotnet/sdk/issues/3485 -->
-    <ItemGroup>
-      <_VsTestLoggers Include="xunit" /> <!-- Don't forget to reference XunitXml.TestLogger in the test projects... -->
-      <_VsTestLoggers Condition="'$(VSTEST_LOGGER)' != ''" Include="$(VSTEST_LOGGER)" />
-      <_VsTestTestAdapterPaths Include="$(BuildInputPath)" />
-      <_VsTestTestAdapterPaths Condition="'$(VSTEST_TESTADAPTERPATH)' != ''" Include="$(VSTEST_TESTADAPTERPATH)" />
-    </ItemGroup>
-    <PropertyGroup>
-      <_VSTestResultsPath>$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\</_VSTestResultsPath>
-      <_VsTestLogger>@(_VsTestLoggers->'%(Identity)')</_VsTestLogger>
-      <_VsTestTestAdapterPath>@(_VsTestTestAdapterPaths->'%(Identity)')</_VsTestTestAdapterPath>
-    </PropertyGroup>
-    <ItemGroup>
-      <_TestProperties Include="IsTestProject=True" />
-      <_TestProperties Include="VSTestNoLogo=True" />
-      <_TestProperties Include="VSTestNoBuild=False" />
-      <_TestProperties Include="VSTestBlame=True" />
-      <_TestProperties Include="VSTestVerbosity=normal" />
-      <_TestProperties Include="VSTestResultsDirectory=$(_VSTestResultsPath)" />
-      <_TestProperties Include="VSTestTestAdapterPath=$(_VsTestTestAdapterPath)" />
-      <_TestProperties Include="VSTestCollect=XPlat Code Coverage" />
-      <_TestProperties Include="VSTestLogger=$(_VsTestLogger)" />
-      <_TestProperties Condition="Exists('$(BuildInputPath)$(MSBuildProjectName)$(UnitTestsSuffix).runsettings')" Include="VSTestSetting=$(BuildInputPath)$(MSBuildProjectName)$(UnitTestsSuffix).runsettings" />
-    </ItemGroup>
-
-    <RemoveDir Directories="$(_VSTestResultsPath)" />
-    <MSBuild
-      Projects="%(TestProjects.Identity)"
-      RebaseOutputs="True"
-      Properties="Configuration=Release;DirectoryBuildPropsPath=$(DirectoryBuildPropsPath);@(_TestProperties)"
-      Targets="Restore;VSTest"
-    />
-    <OnError ExecuteTargets="_CopyTestResults" />
-  </Target>
-
-  <Target Name="_CopyTestResults"
-    Outputs="$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
-    AfterTargets="TestProject"
-  >
-    <Copy
-      Condition="Exists('$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml')"
-      SourceFiles="$(BuildTestIntermediateOutputPath)results\%(TestProjects.Filename)\TestResults.xml"
-      DestinationFiles="$(BaseBuildOutputPath)%(TestProjects.Filename)-xunit-results.xml"
-    />
-  </Target>
- 
-
   <!-- Split the target in 2 so that the condition can be evaluated -->
-  <Target Name="GenerateTestReports" DependsOnTargets="TestProject;_GetCoverageResults" />
+  <Target Name="GenerateTestReports" DependsOnTargets="TestProjects;_GetCoverageResults" />
   <Target Name="_GenerateTestReports"
-    Condition="'@(CoverageResults)' != ''"
+    Condition="'@(CoverageResults)'!=''"
     AfterTargets="GenerateTestReports"
   >
-    <ReportGenerator ReportFiles="@(CoverageResults)" TargetDirectory="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results" ReportTypes="HtmlInline;Cobertura" VerbosityLevel="Info" />
-    <Move SourceFiles="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results\Cobertura.xml" DestinationFiles="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results.xml" />
+    <PropertyGroup>
+      <_CoverageResultsFilename>$(MSBuildProjectName)-cobertura-results.xml</_CoverageResultsFilename>
+    </PropertyGroup>
 
-    <XmlPeek XmlInputPath="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results.xml" Query="/coverage/@line-rate">
+    <ReportGenerator ProjectDirectory="$(MSBuildProjectDirectory)" ReportFiles="@(CoverageResults)" TargetDirectory="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results" ReportTypes="HtmlInline;Cobertura" VerbosityLevel="Info" />
+    <MakeDir Directories="$(BuildTestArtefactsOutputPath)" />
+    <Move SourceFiles="$(BaseBuildOutputPath)$(MSBuildProjectName)-cobertura-results\Cobertura.xml" DestinationFiles="$(BuildTestArtefactsOutputPath)$(_CoverageResultsFilename)" />
+
+    <XmlPeek XmlInputPath="$(BuildTestArtefactsOutputPath)$(_CoverageResultsFilename)" Query="/coverage/@line-rate">
       <Output TaskParameter="Result" ItemName="CoverageLineRate" />
     </XmlPeek>
     <Message Importance="High" Text="Line coverage: @(CoverageLineRate)" />
@@ -199,7 +310,7 @@
     <MSBuild
       Projects="%(Projects.Identity)"
       RebaseOutputs="True"
-      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);DirectoryBuildPropsPath=$(DirectoryBuildPropsPath);%(Projects.Properties)"
+      Properties="Configuration=%(Projects.Configuration);Platform=%(Projects.Platform);@(_CommonProjectProperties);%(Projects.Properties)"
       Targets="Restore;Pack"
     />
   </Target>

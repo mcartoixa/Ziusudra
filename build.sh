@@ -52,7 +52,7 @@ if [ $? -ne 0 ]; then
     failed
 fi
 
-dotnet msbuild $_PROJECT /nologo /t:$_TARGET /m /r /fl /flp:logfile=build.log;verbosity=$_VERBOSITY;encoding=UTF-8
+dotnet msbuild $_PROJECT /nologo /t:"Restore;$_TARGET" /m /r /fl /flp:logfile=build.log;verbosity=$_VERBOSITY;encoding=UTF-8
 if [ $? -ne 0 ]; then
     failed
 fi

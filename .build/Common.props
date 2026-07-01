@@ -1,20 +1,29 @@
-<Project>
-  <PropertyGroup>
-    <BuildInputPath Condition="'$(BuildInputPath)' == ''">$(MSBuildThisFileDirectory)..\</BuildInputPath>
-    <BaseBuildOutputPath>$(BuildInputPath)tmp\</BaseBuildOutputPath>
-  </PropertyGroup>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <BuildInputPath Condition="'$(BaseBuildInputPath)'!=''">$(BaseBuildInputPath)</BuildInputPath>
+        <BaseBuildInputPath Condition="'$(BaseBuildInputPath)'==''">$(MSBuildProjectDirectory)\</BaseBuildInputPath>
 
-  <PropertyGroup>
-    <BuildAnalyzeIntermediateOutputPath>$(BaseBuildOutputPath)analyze\</BuildAnalyzeIntermediateOutputPath>
-    <BuildCompileIntermediateOutputPath>$(BaseBuildOutputPath)bin\</BuildCompileIntermediateOutputPath>
-    <BuildPackageIntermediateOutputPath>$(BaseBuildOutputPath)pack\</BuildPackageIntermediateOutputPath>
-    <BuildPublishIntermediateOutputPath>$(BaseBuildOutputPath)pub\</BuildPublishIntermediateOutputPath>
-    <BuildTestIntermediateOutputPath>$(BaseBuildOutputPath)test\</BuildTestIntermediateOutputPath>
-  </PropertyGroup>
+        <BuildOutputPath Condition="'$(BaseBuildOutputPath)'!=''">$(BaseBuildOutputPath)</BuildOutputPath>
+        <BaseBuildOutputPath Condition="'$(BaseBuildOutputPath)'==''">$(MSBuildProjectDirectory)\tmp\</BaseBuildOutputPath>
 
-  <PropertyGroup>
-    <BaseBuildArtefactsOutputPath>$(BaseBuildOutputPath)out\</BaseBuildArtefactsOutputPath>
-    <BuildBinaryArtefactsOutputPath>$(BaseBuildArtefactsOutputPath)bin\</BuildBinaryArtefactsOutputPath>
-    <BuildDebugArtefactsOutputPath>$(BaseBuildArtefactsOutputPath)pdb\</BuildDebugArtefactsOutputPath>
-  </PropertyGroup>
+        <BuildInputPath Condition="'$(BuildInputPath)'==''">$(BaseBuildInputPath)</BuildInputPath>
+        <BuildOutputPath Condition="'$(BuildOutputPath)'==''">$(BaseBuildOutputPath)</BuildOutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <BuildAnalyzeIntermediateOutputPath>$(BuildOutputPath)anl\</BuildAnalyzeIntermediateOutputPath>
+        <BuildCompileIntermediateOutputPath>$(BuildOutputPath)bin\</BuildCompileIntermediateOutputPath>
+        <BuildObjectsIntermediateOutputPath>$(BuildOutputPath)obj\</BuildObjectsIntermediateOutputPath>
+        <BuildPackageIntermediateOutputPath>$(BuildOutputPath)pak\</BuildPackageIntermediateOutputPath>
+        <BuildPublishIntermediateOutputPath>$(BuildOutputPath)pub\</BuildPublishIntermediateOutputPath>
+        <BuildTestIntermediateOutputPath>$(BuildOutputPath)tst\</BuildTestIntermediateOutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <BaseBuildArtefactsOutputPath>$(BuildOutputPath)out\</BaseBuildArtefactsOutputPath>
+        <BuildBinaryArtefactsOutputPath Condition="'$(BuildBinaryArtefactsOutputPath)'==''">$(BaseBuildArtefactsOutputPath)bin\</BuildBinaryArtefactsOutputPath>
+        <BuildDebugArtefactsOutputPath>$(BaseBuildArtefactsOutputPath)pdb\</BuildDebugArtefactsOutputPath>
+        <BuildPublishArtefactsOutputPath Condition="'$(BuildPublishArtefactsOutputPath)'==''">$(BaseBuildArtefactsOutputPath)bin\</BuildPublishArtefactsOutputPath>
+        <BuildTestArtefactsOutputPath Condition="'$(BuildTestArtefactsOutputPath)'==''">$(BuildOutputPath)</BuildTestArtefactsOutputPath>
+    </PropertyGroup>
 </Project>

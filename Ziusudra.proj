@@ -5,7 +5,7 @@
   <ItemDefinitionGroup>
     <Projects>
       <Configuration>Release</Configuration>
-      <Platform>Any CPU</Platform>
+      <Platform>AnyCPU</Platform>
     </Projects>
   </ItemDefinitionGroup>
 

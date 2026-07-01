@@ -4,13 +4,14 @@
 
   <!-- Intermediates redirections, cf. https://github.com/dotnet/sdk/issues/3485 -->
   <PropertyGroup>
-    <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)' == ''">$(BaseBuildOutputPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
-    <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$(BuildCompileIntermediateOutputPath)$(MSBuildProjectName)\</BaseOutputPath>
-    <DefaultItemExcludes>$(MSBuildProjectDirectory)/bin/**;$(MSBuildProjectDirectory)/obj/**</DefaultItemExcludes>
+    <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'==''">$(BuildObjectsIntermediateOutputPath)$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath Condition="'$(BaseOutputPath)'==''">$(BuildCompileIntermediateOutputPath)$(MSBuildProjectName)\</BaseOutputPath>
+    <DefaultItemExcludes>$(MSBuildProjectDirectory)\bin\**;$(MSBuildProjectDirectory)\obj\**</DefaultItemExcludes>
   </PropertyGroup>
-
+    
   <!-- Outputs redirections -->
   <PropertyGroup>
-    <PackageOutputPath Condition="'$(PackageOutputPath)' == ''">$(BuildBinaryArtefactsOutputPath)</PackageOutputPath>
+    <PackageOutputPath Condition="'$(PackageOutputPath)'==''">$(BuildBinaryArtefactsOutputPath)</PackageOutputPath>
+    <PublishDir Condition="'$(PublishDir)'==''">$(BuildPublishIntermediateOutputPath)$(MSBuildProjectName)\</PublishDir>
   </PropertyGroup>
 </Project>
