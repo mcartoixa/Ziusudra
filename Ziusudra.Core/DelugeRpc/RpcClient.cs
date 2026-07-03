@@ -31,6 +31,12 @@ namespace Ziusudra.DelugeRpc
             _Options = options ?? new RpcClientOptions();
         }
 
+        /// <summary>Finalize the current instance of the <see cref="RpcClient" /> class.</summary>
+        ~RpcClient()
+        {
+            Dispose();
+        }
+
         /// <summary>Sends the specified <paramref name="request" /> to the server.</summary>
         /// <param name="request">The request to send.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
@@ -155,12 +161,25 @@ namespace Ziusudra.DelugeRpc
             _Writer = null;
         }
 
+        private void Dispose()
+        {
+            if (Interlocked.Exchange(ref _Disposed, 1) != 0)
+                return;
+
+            // Cancel and dispose the stream so the message loop's pending read unblocks and the loop exits.
+            // The synchronous path cannot await the loop, unlike DisposeAsync.
+            _CancellationTokenSource.Cancel();
+            _Stream?.Dispose();
+
+            Cleanup();
+        }
+
         private async ValueTask DisposeAsyncCore()
         {
             if (Interlocked.Exchange(ref _Disposed, 1) != 0)
                 return;
 
-            _CancellationTokenSource.Cancel();
+            await _CancellationTokenSource.CancelAsync();
             if (_MessageLoopTask != null)
             {
                 try
@@ -181,16 +200,8 @@ namespace Ziusudra.DelugeRpc
 
         void IDisposable.Dispose()
         {
-            if (Interlocked.Exchange(ref _Disposed, 1) != 0)
-                return;
             GC.SuppressFinalize(this);
-
-            // Cancel and dispose the stream so the message loop's pending read unblocks and the loop exits.
-            // The synchronous path cannot await the loop, unlike DisposeAsync.
-            _CancellationTokenSource.Cancel();
-            _Stream?.Dispose();
-
-            Cleanup();
+            Dispose();
         }
 
         ValueTask IAsyncDisposable.DisposeAsync()

@@ -53,7 +53,11 @@ namespace Ziusudra.DelugeRpc.Daemon
         protected override IDictionary<string, object> GetKeywordArgs()
         {
             return new Dictionary<string, object>() {
-                { "client_version", ClientVersion } // Required for some reaseon
+                // The daemon requires a client_version on daemon.login; omitting it makes the
+                // daemon reject the connection with IncompatibleClient (deluge/core/rpcserver.py).
+                // Only its presence is checked, not its value. This handshake was introduced in
+                // Deluge 2.0, which is why the daemon baseline is 2.0.0.
+                { "client_version", ClientVersion }
             };
         }
 

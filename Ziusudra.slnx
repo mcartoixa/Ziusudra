@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Ziusudra.Core.Tests/Ziusudra.Core.Tests.csproj" />
+  <Project Path="Ziusudra.Core/Ziusudra.Core.csproj" />
+  <Project Path="Ziusudra.Desktop/Ziusudra.Desktop.csproj" />
+</Solution>
