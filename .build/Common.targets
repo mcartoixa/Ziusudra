@@ -52,7 +52,10 @@
 
   <!-- Clean -->
   <Target Name="Clean">
-    <RemoveDir Directories="$(BuildBinaryArtefactsOutputPath);$(BuildTestArtefactsOutputPath);$(BuildPublishArtefactsOutputPath);$(BuildOutputPath)" />
+    <!-- NEVER delete $(BuildOutputPath) as part of the build. Restore has already generated artefacts in $(BuildObjectsIntermediateOutputPath) that are necessary. -->
+    <RemoveDir Directories="$(BuildBinaryArtefactsOutputPath)" Condition="'$(BuildBinaryArtefactsOutputPath)'!='$(BuildOutputPath)'" />
+    <RemoveDir Directories="$(BuildTestArtefactsOutputPath)" Condition="'$(BuildTestArtefactsOutputPath)'!='$(BuildOutputPath)'" />
+    <RemoveDir Directories="$(BuildPublishArtefactsOutputPath)" Condition="'$(BuildPublishArtefactsOutputPath)'!='$(BuildOutputPath)'" />
   </Target>
 
   <Target Name="CleanProjects">
@@ -119,8 +122,9 @@
          If one solution exists with no solution filter all the projects will be drawn in. -->
     <ItemGroup>
       <_TestedProjects
-        Include="**\%(Projects.Filename)$(TestsNamespaceSuffix)%(Projects.Extension)"
         Condition="!Exists('%(Projects.RelativeDir)%(Projects.Filename)$(TestFilterSuffix).slnf')"
+        Include="**\%(Projects.Filename)$(TestsNamespaceSuffix)%(Projects.Extension)"
+        Exclude="tmp\**\%(Projects.Filename)$(TestsNamespaceSuffix)%(Projects.Extension)"
       >
         <Configuration>%(Projects.Configuration)</Configuration>
         <Platform>%(Projects.Platform)</Platform>
@@ -212,7 +216,7 @@
       <_TestProperties Include="VSTestVerbosity=normal" />
       <_TestProperties Include="VSTestResultsDirectory=$(_VsTestResultsPath)" />
       <_TestProperties Include="VSTestTestAdapterPath=$(_VsTestTestAdapterPath)" />
-      <_TestProperties Include="VSTestCollect=XPlat Code Coverage" />
+      <_TestProperties Include="VSTestCollect=&quot;XPlat Code Coverage&quot;" />
       <_TestProperties Include="VSTestLogger=$(_VsTestLogger)" />
       <_TestProperties Condition="'$(_VsTestRunSettingsPath)' != ''" Include="VSTestSetting=$(_VsTestRunSettingsPath)" />
       <_TestProperties Condition="'$(MSBuildRuntimeType)'!='Core' And '%(TestedProjects.TestProperties)'!=''" Include="%(TestedProjects.TestProperties)" />

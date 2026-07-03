@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     env:
       DOTNET_NOLOGO: true
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
@@ -27,7 +27,7 @@ jobs:
       shell: cmd
       run: |
         CALL .build/SetEnv.bat
-        dotnet.exe msbuild Ziusudra.proj -nologo -t:Release -m -mt -r -fl -flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8 -bl:build.binlog -nr:False -tl:off
+        msbuild.exe Ziusudra.proj /nologo /t:Release /m /mt /r /fl /flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8 /bl:build.binlog /nr:False /tl:off
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v7
       with:
@@ -51,4 +51,5 @@ jobs:
         path: |
           build.log
           build.binlog
+          tmp/**/*.log
         retention-days: 5

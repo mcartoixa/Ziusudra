@@ -10,10 +10,11 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <!--Projects Include="Ziusudra.slnx" /-->
     <Projects Include="Ziusudra.Core\Ziusudra.Core.csproj" />
     <Projects Include="Ziusudra.Client\Ziusudra.Client.csproj" />
-    <Projects Include="Ziusudra.Desktop\Ziusudra.Desktop.csproj" />
+    <Projects Include="Ziusudra.Desktop\Ziusudra.Desktop.csproj">
+      <Platform>x64</Platform>
+    </Projects>
   </ItemGroup>
 
   <Import Project="$(MSBuildProjectDirectory)\.build\Common.targets" />

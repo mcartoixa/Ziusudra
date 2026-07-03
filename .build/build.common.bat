@@ -29,7 +29,7 @@ GOTO END
 :: Builds the project
 :: -------------------------------------------------------------------
 :BUILD
-dotnet.exe msbuild %_PROJECT% -nologo -t:%_TARGET% -m -mt -r -fl -flp:logfile=build.log;verbosity=%_VERBOSITY%;encoding=UTF-8 %_LOGGERS% -nr:False -v:normal -tl:%_TERMINALLOGGER%
+msbuild.exe %_PROJECT% /nologo /t:%_TARGET% /m /mt /r /fl /flp:logfile=build.log;verbosity=%_VERBOSITY%;encoding=UTF-8 %_LOGGERS% /nr:False /v:normal /tl:%_TERMINALLOGGER%
 IF ERRORLEVEL 1 GOTO END_ERROR
 GOTO END
 
@@ -55,7 +55,7 @@ IF /I "%~1"=="compile"              SET _TARGET=Compile& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="test"                 SET _TARGET=Test& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="package"              SET _TARGET=Package& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="publish"              SET _TARGET=Publish& SHIFT & GOTO ARGS_PARSE
-IF /I "%~1"=="release"              SET _TARGET=Release& SHIFT & GOTO ARGS_PARSE
+IF /I "%~1"=="release"              SET _TARGET=Release& RMDIR /S /Q tmp 2>nul& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="build"                SET _TARGET=Build& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="/log"                 SET _VERBOSITY=diagnostic& SET _LOGGERS=-bl:build.binlog& SET _TERMINALLOGGER=off& SHIFT & GOTO ARGS_PARSE
 IF /I "%~1"=="/NoPause"             SET _NO_PAUSE=1& SHIFT & GOTO ARGS_PARSE
