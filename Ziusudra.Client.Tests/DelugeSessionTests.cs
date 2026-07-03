@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Ziusudra.Client.Tests
+{
+
+    public class DelugeSessionTests
+    {
+
+        [Fact]
+        public async Task ConnectAsync_ShouldDriveTheBootstrapSequenceInOrder()
+        {
+            FakeRpcClient client = FullyScriptedClient();
+            await using var session = new DelugeSession(_ => client);
+
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            Assert.Equal(SessionState.Connected, session.State);
+            Assert.True(client.IsStarted);
+            Assert.Equal(
+                new[] { "daemon.info", "daemon.login", "daemon.set_event_interest", "daemon.get_method_list", "core.get_libtorrent_version" },
+                client.SentMethods);
+        }
+
+        [Fact]
+        public async Task ConnectAsync_ShouldExposeServerCapabilities()
+        {
+            FakeRpcClient client = FullyScriptedClient();
+            await using var session = new DelugeSession(_ => client);
+
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            Assert.NotNull(session.Capabilities);
+            Assert.Equal("2.0.0", session.Capabilities!.DaemonVersion);
+            Assert.Equal("2.0.3", session.Capabilities.LibtorrentVersion);
+            Assert.True(session.Capabilities.HasMethod("core.get_torrents_status"));
+            Assert.False(session.Capabilities.HasMethod("core.does_not_exist"));
+            Assert.Equal(5, session.AuthenticationLevel);
+        }
+
+        [Fact]
+        public async Task ConnectAsync_ShouldSkipLibtorrentVersionWhenTheMethodIsAbsent()
+        {
+            FakeRpcClient client = new FakeRpcClient(Endpoint)
+                .Respond("daemon.info", "2.0.0")
+                .Respond("daemon.login", 5)
+                .Respond("daemon.set_event_interest", true)
+                .Respond("daemon.get_method_list", new[] { "core.get_torrents_status" });
+            await using var session = new DelugeSession(_ => client);
+
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            Assert.DoesNotContain("core.get_libtorrent_version", client.SentMethods);
+            Assert.Equal(string.Empty, session.Capabilities!.LibtorrentVersion);
+        }
+
+        [Fact]
+        public async Task ConnectAsync_ShouldTransitionThroughConnectingAuthenticatingConnected()
+        {
+            FakeRpcClient client = FullyScriptedClient();
+            await using var session = new DelugeSession(_ => client);
+            var states = new List<SessionState>();
+            session.StateChanged += (_, _) => states.Add(session.State);
+
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            Assert.Equal(
+                new[] { SessionState.Connecting, SessionState.Authenticating, SessionState.Connected },
+                states);
+        }
+
+        [Fact]
+        public async Task ConnectAsync_ShouldFaultAndStopTheClientWhenLoginFails()
+        {
+            FakeRpcClient client = new FakeRpcClient(Endpoint)
+                .Respond("daemon.info", "2.0.0")
+                .Fail("daemon.login", new InvalidOperationException("bad login"));
+            await using var session = new DelugeSession(_ => client);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await session.ConnectAsync(Endpoint, "user", "pass"));
+
+            Assert.Equal(SessionState.Faulted, session.State);
+            Assert.True(client.IsStopped);
+            Assert.Null(session.Capabilities);
+        }
+
+        [Fact]
+        public async Task ConnectAsync_ShouldRejectWhenAlreadyConnected()
+        {
+            FakeRpcClient client = FullyScriptedClient();
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await session.ConnectAsync(Endpoint, "user", "pass"));
+        }
+
+        [Fact]
+        public async Task ConnectAsync_ShouldRecoverFromAFaultedState()
+        {
+            FakeRpcClient failing = new FakeRpcClient(Endpoint)
+                .Respond("daemon.info", "2.0.0")
+                .Fail("daemon.login", new InvalidOperationException("bad login"));
+            FakeRpcClient succeeding = FullyScriptedClient();
+            var clients = new Queue<FakeRpcClient>(new[] { failing, succeeding });
+            await using var session = new DelugeSession(_ => clients.Dequeue());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await session.ConnectAsync(Endpoint, "user", "pass"));
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            Assert.Equal(SessionState.Connected, session.State);
+        }
+
+        [Fact]
+        public async Task DisconnectAsync_ShouldStopTheClientAndResetState()
+        {
+            FakeRpcClient client = FullyScriptedClient();
+            var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            await session.DisconnectAsync();
+
+            Assert.Equal(SessionState.Disconnected, session.State);
+            Assert.True(client.IsStopped);
+            Assert.Null(session.Capabilities);
+        }
+
+        private static FakeRpcClient FullyScriptedClient()
+        {
+            return new FakeRpcClient(Endpoint)
+                .Respond("daemon.info", "2.0.0")
+                .Respond("daemon.login", 5)
+                .Respond("daemon.set_event_interest", true)
+                .Respond("daemon.get_method_list", new[] { "core.get_libtorrent_version", "core.get_torrents_status" })
+                .Respond("core.get_libtorrent_version", "2.0.3");
+        }
+
+        private static IPEndPoint Endpoint => new(IPAddress.Loopback, 58846);
+    }
+}

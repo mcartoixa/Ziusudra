@@ -12,6 +12,7 @@
   <ItemGroup>
     <!--Projects Include="Ziusudra.slnx" /-->
     <Projects Include="Ziusudra.Core\Ziusudra.Core.csproj" />
+    <Projects Include="Ziusudra.Client\Ziusudra.Client.csproj" />
     <Projects Include="Ziusudra.Desktop\Ziusudra.Desktop.csproj" />
   </ItemGroup>
 

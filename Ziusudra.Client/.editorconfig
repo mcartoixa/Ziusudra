@@ -1,0 +1,6 @@
+[*.cs]
+dotnet_analyzer_diagnostic.severity = warning
+
+# Performance analyzers not warranted for this client library (kept as suggestions):
+# CA1863: cache CompositeFormat - the formatted strings are cold-path exception messages.
+dotnet_diagnostic.CA1863.severity = suggestion
