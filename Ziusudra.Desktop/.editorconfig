@@ -1,0 +1,6 @@
+[*.cs]
+
+# MVVMTK0045 advises partial properties over fields for [ObservableProperty] so CsWinRT can emit
+# WinRT marshalling code. This app binds with classic {Binding} (reflection-based) and does not
+# publish AOT, so that marshalling path is never exercised; kept as a suggestion.
+dotnet_diagnostic.MVVMTK0045.severity = suggestion

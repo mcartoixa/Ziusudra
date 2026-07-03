@@ -1,6 +1,8 @@
+using System.IO;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Ziusudra.Client;
 using Ziusudra.DelugeRpc;
@@ -27,7 +29,7 @@ namespace Ziusudra.Desktop
         /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            _Window = new MainWindow();
+            _Window = Services.GetRequiredService<MainWindow>();
             _Window.Activate();
         }
 
@@ -36,7 +38,24 @@ namespace Ziusudra.Desktop
             // Session layer: the production factory creates a real RpcClient for a resolved endpoint.
             services.AddSingleton<Func<IPEndPoint, IRpcClient>>(_ => endpoint => new RpcClient(endpoint));
             services.AddSingleton<DelugeSession>();
+
+            // Connection manager: persistence, host resolution, and the UI-thread marshalling seam.
+            services.AddSingleton<IUIDispatcher>(_ => new UIDispatcher(DispatcherQueue.GetForCurrentThread()));
+            services.AddSingleton<IHostStore>(_ => new JsonHostStore(HostStorePath));
+            services.AddSingleton<IHostResolver, DnsHostResolver>();
+            services.AddSingleton<ConnectionManager>();
+            services.AddSingleton<ConnectionManagerViewModel>();
+
+            services.AddTransient<MainWindow>();
         }
+
+        private static string HostStorePath =>
+#if DEBUG
+            // Keep the store next to the executable during development: easy to find and clean.
+            Path.Combine(AppContext.BaseDirectory, "hosts.json");
+#else
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ziusudra", "hosts.json");
+#endif
 
         /// <summary>Gets the service provider for the running application.</summary>
         public IServiceProvider Services => _Host.Services;

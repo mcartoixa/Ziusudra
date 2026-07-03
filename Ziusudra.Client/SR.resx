@@ -61,4 +61,7 @@
   <data name="DelugeSession_CannotConnectInState" xml:space="preserve">
     <value>The session cannot connect while it is in the {0} state.</value>
   </data>
+  <data name="DnsHostResolver_CouldNotResolveHost" xml:space="preserve">
+    <value>Could not resolve the host '{0}'.</value>
+  </data>
 </root>

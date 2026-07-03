@@ -68,5 +68,14 @@ namespace Ziusudra.Client {
                 return ResourceManager.GetString("DelugeSession_CannotConnectInState", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Could not resolve the host '{0}'.
+        /// </summary>
+        internal static string DnsHostResolver_CouldNotResolveHost {
+            get {
+                return ResourceManager.GetString("DnsHostResolver_CouldNotResolveHost", resourceCulture);
+            }
+        }
     }
 }
