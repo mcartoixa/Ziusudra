@@ -32,9 +32,11 @@ jobs:
       uses: codecov/codecov-action@v7
       with:
         directory: tmp/
-        files: Ziusudra-cobertura-results.xml
+        disable_search: true
+        files: tmp/Ziusudra-cobertura-results.xml
         flags: unittests
         fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Archive artifacts
       uses: actions/upload-artifact@v7
       with:

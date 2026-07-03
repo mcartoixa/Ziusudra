@@ -11,7 +11,7 @@ namespace Ziusudra.DelugeRpc
 
         /// <summary>Create a new instance of the <see cref="RpcResponse" /> type.</summary>
         /// <param name="values">The values to create the response with.</param>
-        internal protected RpcResponse(ICollection values)
+        protected internal RpcResponse(ICollection values)
         {
             if (values is IList l)
                 Values = l;
@@ -31,6 +31,6 @@ namespace Ziusudra.DelugeRpc
         RpcMessageType IServerMessage.MessageType => (RpcMessageType)Convert.ToInt32(Values[0], CultureInfo.InvariantCulture);
 
         /// <summary>Gets the values of the response.</summary>
-        internal protected IList Values { get; }
+        protected internal IList Values { get; }
     }
 }

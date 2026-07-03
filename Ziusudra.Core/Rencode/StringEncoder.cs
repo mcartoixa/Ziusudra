@@ -19,7 +19,7 @@ namespace Ziusudra.Rencode
         }
 
         /// <inheritdoc />
-        protected async override ValueTask<string> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
+        protected override async ValueTask<string> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
         {
             int stringLength;
             if (header < FIXED_START)
@@ -52,7 +52,7 @@ namespace Ziusudra.Rencode
         }
 
         /// <inheritdoc />
-        protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, string value, CancellationToken cancellationToken)
+        protected override async ValueTask DoWriteValueAsync(IRencodeWriter writer, string value, CancellationToken cancellationToken)
         {
             byte[] content = Encoding.UTF8.GetBytes(value);
 

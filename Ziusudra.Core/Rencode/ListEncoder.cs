@@ -24,7 +24,7 @@ namespace Ziusudra.Rencode
         }
 
         /// <inheritdoc />
-        protected async override ValueTask<ICollection> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
+        protected override async ValueTask<ICollection> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
         {
             var ret = new ArrayList();
             if (header >= FIXED_START && header <= byte.MaxValue)
@@ -51,7 +51,7 @@ namespace Ziusudra.Rencode
         }
 
         /// <inheritdoc />
-        protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, ICollection value, CancellationToken cancellationToken)
+        protected override async ValueTask DoWriteValueAsync(IRencodeWriter writer, ICollection value, CancellationToken cancellationToken)
         {
             await writer.WriteAsync(new byte[] { value.Count < FIXED_COUNT ? (byte)(FIXED_START + value.Count) : CHR_LIST }, cancellationToken)
                 .ConfigureAwait(false);

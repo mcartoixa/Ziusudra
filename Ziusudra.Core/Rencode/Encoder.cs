@@ -68,7 +68,7 @@ namespace Ziusudra.Rencode
         protected abstract ValueTask DoWriteValueAsync(IRencodeWriter writer, object? value, CancellationToken cancellationToken);
 
         /// <summary>The list of all standard Rencode encoders.</summary>
-        internal protected static readonly IEnumerable<IEncoder> Encoders = new IEncoder[] {
+        protected internal static readonly IEnumerable<IEncoder> Encoders = new IEncoder[] {
             NullEncoder.Instance,
             BooleanEncoder.Instance,
             SByteEncoder.Instance,

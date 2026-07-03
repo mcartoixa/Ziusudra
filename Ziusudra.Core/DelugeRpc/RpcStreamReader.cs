@@ -66,7 +66,7 @@ namespace Ziusudra.DelugeRpc
 
             object? content;
             using (var compressed = new MemoryStream(body, false))
-            using (var decompressed = new ZLibStream(compressed, CompressionMode.Decompress))
+            await using (var decompressed = new ZLibStream(compressed, CompressionMode.Decompress))
             using (var reader = new Rencode.RencodeStreamReader(decompressed, true))
             {
                 content = await reader.ReadValueAsync(cancellationToken)
@@ -116,14 +116,8 @@ namespace Ziusudra.DelugeRpc
         /// <summary>Get or set the current logger.</summary>
         public ILogger Logger
         {
-            get
-            {
-                return _Logger;
-            }
-            set
-            {
-                _Logger = value;
-            }
+            get => _Logger;
+            set => _Logger = value;
         }
 
         /// <summary>Gets or sets the maximum accepted size, in bytes, of a single compressed message frame.</summary>

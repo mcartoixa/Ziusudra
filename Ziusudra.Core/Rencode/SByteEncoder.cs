@@ -15,7 +15,7 @@
         }
 
         /// <inheritdoc />
-        protected async override ValueTask<sbyte> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
+        protected override async ValueTask<sbyte> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
         {
             if (header == CHR_INT)
             {
@@ -32,7 +32,7 @@
         }
 
         /// <inheritdoc />
-        protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, sbyte value, CancellationToken cancellationToken)
+        protected override async ValueTask DoWriteValueAsync(IRencodeWriter writer, sbyte value, CancellationToken cancellationToken)
         {
             if (value >= 0 && value < POS_FIXED_COUNT)
             {

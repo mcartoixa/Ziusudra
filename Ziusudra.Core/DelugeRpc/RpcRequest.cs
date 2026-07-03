@@ -13,13 +13,13 @@ namespace Ziusudra.DelugeRpc
     {
 
         /// <summary>Create a new instance of the <see cref="RpcRequest{TResponse}" /> type.</summary>
-        public RpcRequest()
+        protected RpcRequest()
         { }
 
         /// <summary>Create the typed response to the current request from the specified server <paramref name="reply" />.</summary>
         /// <param name="reply">The reply to create the response from.</param>
         /// <returns>The response to the current request.</returns>
-        internal protected abstract TResponse CreateResponse(IServerReply reply);
+        protected internal abstract TResponse CreateResponse(IServerReply reply);
 
         /// <summary>Gets the arguments to call the <see cref="Method" /> with.</summary>
         /// <returns>The arguments.</returns>

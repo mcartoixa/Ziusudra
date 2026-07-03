@@ -57,7 +57,7 @@ namespace Ziusudra.DelugeRpc.Core
         /// <summary>Create the typed response to the current request from the specified server <paramref name="reply" />.</summary>
         /// <param name="reply">The reply to create the response from.</param>
         /// <returns>The response to the current request.</returns>
-        internal protected override Response CreateResponse(IServerReply reply)
+        protected internal override Response CreateResponse(IServerReply reply)
         {
             return new Response(reply);
         }

@@ -12,6 +12,7 @@ namespace Ziusudra.DelugeRpc
 
     /// <summary>Client that can communicate with a Deluge server using the Deluge RPC protocol.</summary>
     public sealed class RpcClient:
+        IRpcClient,
         IDisposable,
         IAsyncDisposable
     {
@@ -213,17 +214,12 @@ namespace Ziusudra.DelugeRpc
         /// <summary>Get or set the current logger.</summary>
         public ILogger Logger
         {
-            get
-            {
-                return _Logger;
-            }
+            get => _Logger;
             set
             {
                 _Logger = value;
-                if (_Reader != null)
-                    _Reader.Logger = value;
-                if (_Writer != null)
-                    _Writer.Logger = value;
+                _Reader?.Logger = value;
+                _Writer?.Logger = value;
             }
         }
 

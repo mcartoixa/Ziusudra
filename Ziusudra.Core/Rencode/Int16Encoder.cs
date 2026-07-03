@@ -17,7 +17,7 @@
         }
 
         /// <inheritdoc />
-        protected async override ValueTask<short> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
+        protected override async ValueTask<short> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
         {
             if (header == CHR_INT)
             {
@@ -30,7 +30,7 @@
         }
 
         /// <inheritdoc />
-        protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, short value, CancellationToken cancellationToken)
+        protected override async ValueTask DoWriteValueAsync(IRencodeWriter writer, short value, CancellationToken cancellationToken)
         {
             if (value >= sbyte.MinValue && value <= sbyte.MaxValue)
             {

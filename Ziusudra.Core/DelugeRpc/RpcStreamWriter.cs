@@ -51,7 +51,7 @@ namespace Ziusudra.DelugeRpc
             ms.Position = 5;
 
             // Write the content
-            using (var contentStream = new ZLibStream(ms, CompressionMode.Compress, true))
+            await using (var contentStream = new ZLibStream(ms, CompressionMode.Compress, true))
             {
                 using var writer = new Rencode.RencodeStreamWriter(contentStream, true);
                 await writer.WriteValueAsync(request.ToValueCollection(), cancellationToken);
@@ -88,14 +88,8 @@ namespace Ziusudra.DelugeRpc
         /// <summary>Get or set the current logger.</summary>
         public ILogger Logger
         {
-            get
-            {
-                return _Logger;
-            }
-            set
-            {
-                _Logger = value;
-            }
+            get => _Logger;
+            set => _Logger = value;
         }
 
         private readonly bool _LeaveOpen;

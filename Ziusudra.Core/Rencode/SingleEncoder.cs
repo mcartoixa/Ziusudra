@@ -13,7 +13,7 @@
         }
 
         /// <inheritdoc />
-        protected async override ValueTask<float> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
+        protected override async ValueTask<float> DoReadValueAsync(IRencodeReader reader, byte header, CancellationToken cancellationToken)
         {
             if (header == CHR_FLOAT)
             {
@@ -27,7 +27,7 @@
         }
 
         /// <inheritdoc />
-        protected async override ValueTask DoWriteValueAsync(IRencodeWriter writer, float value, CancellationToken cancellationToken)
+        protected override async ValueTask DoWriteValueAsync(IRencodeWriter writer, float value, CancellationToken cancellationToken)
         {
             await writer.WriteAsync(new byte[] { CHR_FLOAT }, cancellationToken).ConfigureAwait(false);
             byte[] buffer = BitConverter.GetBytes(value);
