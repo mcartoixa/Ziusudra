@@ -1,10 +1,11 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Ziusudra.DelugeRpc.Core;
 
 namespace Ziusudra.Desktop.ViewModel
 {
 
-    /// <summary>Presents one torrent row in the list. Updated in place so unchanged fields raise no notification.</summary>
+    /// <summary>Presents one torrent for the list and the details tabs. Updated in place so unchanged fields raise no notification.</summary>
     public sealed partial class TorrentRow:
         ObservableObject
     {
@@ -29,8 +30,12 @@ namespace Ziusudra.Desktop.ViewModel
             Name = torrent.Name ?? string.Empty;
             State = torrent.State?.ToString() ?? string.Empty;
             Progress = torrent.Progress ?? 0;
-            DownloadRate = torrent.DownloadPayloadRate ?? 0;
-            UploadRate = torrent.UploadPayloadRate ?? 0;
+            ProgressText = HumanReadable.Percent(torrent.Progress);
+            DownloadRateText = HumanReadable.Rate(torrent.DownloadPayloadRate);
+            UploadRateText = HumanReadable.Rate(torrent.UploadPayloadRate);
+            EtaText = HumanReadable.Duration(torrent.ExpectedTimeOfArrival);
+            SizeText = HumanReadable.Bytes(torrent.TotalWanted);
+            QueueText = torrent.Queue?.ToString(CultureInfo.CurrentCulture) ?? Dash;
         }
 
         /// <summary>The torrent name.</summary>
@@ -41,16 +46,34 @@ namespace Ziusudra.Desktop.ViewModel
         [ObservableProperty]
         private string _State = string.Empty;
 
-        /// <summary>The download progress, from 0 to 1.</summary>
+        /// <summary>The download progress, from 0 to 1, for a progress bar.</summary>
         [ObservableProperty]
         private double _Progress;
 
-        /// <summary>The download rate, in bytes per second.</summary>
+        /// <summary>The download progress as a percentage.</summary>
         [ObservableProperty]
-        private int _DownloadRate;
+        private string _ProgressText = string.Empty;
 
-        /// <summary>The upload rate, in bytes per second.</summary>
+        /// <summary>The download rate.</summary>
         [ObservableProperty]
-        private int _UploadRate;
+        private string _DownloadRateText = string.Empty;
+
+        /// <summary>The upload rate.</summary>
+        [ObservableProperty]
+        private string _UploadRateText = string.Empty;
+
+        /// <summary>The estimated time until the download completes.</summary>
+        [ObservableProperty]
+        private string _EtaText = string.Empty;
+
+        /// <summary>The wanted size of the torrent.</summary>
+        [ObservableProperty]
+        private string _SizeText = string.Empty;
+
+        /// <summary>The position of the torrent in the queue.</summary>
+        [ObservableProperty]
+        private string _QueueText = string.Empty;
+
+        private const string Dash = "—";
     }
 }

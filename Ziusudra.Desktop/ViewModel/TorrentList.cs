@@ -30,6 +30,10 @@ namespace Ziusudra.Desktop.ViewModel
         /// <summary>Gets the bound torrent rows.</summary>
         public ObservableCollection<TorrentRow> Torrents { get; } = new();
 
+        /// <summary>The row selected in the list, whose fields the details tabs present.</summary>
+        [ObservableProperty]
+        private TorrentRow? _SelectedTorrent;
+
         private void OnSessionStateChanged(object? sender, EventArgs e)
         {
             _Dispatcher.Post(SyncToSession);

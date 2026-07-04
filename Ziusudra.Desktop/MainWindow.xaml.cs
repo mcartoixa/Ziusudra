@@ -24,7 +24,7 @@ namespace Ziusudra.Desktop
                 root.DataContext = viewModel;
                 root.Loaded += OnRootLoaded;
             }
-            TorrentListView.DataContext = torrents;
+            TorrentArea.DataContext = torrents;
         }
 
         private async void OnRootLoaded(object sender, RoutedEventArgs e)
