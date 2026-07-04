@@ -61,6 +61,12 @@
   <data name="DelugeSession_CannotConnectInState" xml:space="preserve">
     <value>The session cannot connect while it is in the {0} state.</value>
   </data>
+  <data name="DelugeSession_CommandRequiresConnection" xml:space="preserve">
+    <value>The session must be connected to run this command.</value>
+  </data>
+  <data name="DelugeSession_MethodNotSupported" xml:space="preserve">
+    <value>The connected daemon does not support the '{0}' method.</value>
+  </data>
   <data name="DnsHostResolver_CouldNotResolveHost" xml:space="preserve">
     <value>Could not resolve the host '{0}'.</value>
   </data>

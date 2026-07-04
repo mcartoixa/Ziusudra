@@ -54,11 +54,19 @@
 
         <Grid Grid.Row="1" x:Name="TorrentArea" RowSpacing="12">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <ListView Grid.Row="0" ItemsSource="{Binding Torrents}"
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                <Button Content="Pause" Command="{Binding PauseCommand}" />
+                <Button Content="Resume" Command="{Binding ResumeCommand}" />
+                <Button Content="Remove" Command="{Binding RemoveCommand}" />
+                <TextBlock Text="{Binding CommandStatus}" VerticalAlignment="Center" Opacity="0.8" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <ListView Grid.Row="1" ItemsSource="{Binding Torrents}"
                       SelectedItem="{Binding SelectedTorrent, Mode=TwoWay}"
                       BorderThickness="1"
                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
@@ -87,7 +95,7 @@
                 </ListView.ItemTemplate>
             </ListView>
 
-            <Pivot Grid.Row="1" Height="220" DataContext="{Binding SelectedTorrent}">
+            <Pivot Grid.Row="2" Height="220" DataContext="{Binding SelectedTorrent}">
                 <PivotItem Header="Status">
                     <Grid ColumnSpacing="16" RowSpacing="6" Padding="4,12">
                         <Grid.ColumnDefinitions>

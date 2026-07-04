@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Ziusudra.Client;
 using Ziusudra.DelugeRpc.Core;
 
@@ -32,7 +33,61 @@ namespace Ziusudra.Desktop.ViewModel
 
         /// <summary>The row selected in the list, whose fields the details tabs present.</summary>
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(PauseCommand))]
+        [NotifyCanExecuteChangedFor(nameof(ResumeCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RemoveCommand))]
         private TorrentRow? _SelectedTorrent;
+
+        /// <summary>The message from the last command, shown to the user; empty when it succeeded.</summary>
+        [ObservableProperty]
+        private string _CommandStatus = string.Empty;
+
+        /// <summary>Pauses the selected torrent.</summary>
+        [RelayCommand(CanExecute = nameof(CanPause))]
+        private Task PauseAsync()
+        {
+            TorrentRow? selected = SelectedTorrent;
+            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.PauseAsync(new[] { selected.Hash }));
+        }
+
+        private bool CanPause() => CanCommand(PauseTorrentsRequest.MethodName);
+
+        /// <summary>Resumes the selected torrent.</summary>
+        [RelayCommand(CanExecute = nameof(CanResume))]
+        private Task ResumeAsync()
+        {
+            TorrentRow? selected = SelectedTorrent;
+            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.ResumeAsync(new[] { selected.Hash }));
+        }
+
+        private bool CanResume() => CanCommand(ResumeTorrentsRequest.MethodName);
+
+        /// <summary>Removes the selected torrent, leaving its downloaded data on disk.</summary>
+        [RelayCommand(CanExecute = nameof(CanRemove))]
+        private Task RemoveAsync()
+        {
+            TorrentRow? selected = SelectedTorrent;
+            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.RemoveAsync(selected.Hash, removeData: false));
+        }
+
+        private bool CanRemove() => CanCommand(RemoveTorrentRequest.MethodName);
+
+        private bool CanCommand(string method)
+        {
+            return SelectedTorrent != null && _Session.State == SessionState.Connected && _Session.Supports(method);
+        }
+
+        private async Task RunAsync(Func<Task> command)
+        {
+            try
+            {
+                CommandStatus = string.Empty;
+                await command();
+            } catch (Exception ex)
+            {
+                CommandStatus = ex.Message;
+            }
+        }
 
         private void OnSessionStateChanged(object? sender, EventArgs e)
         {
@@ -45,6 +100,10 @@ namespace Ziusudra.Desktop.ViewModel
                 Attach(_Session.Torrents);
             else
                 Detach();
+
+            PauseCommand.NotifyCanExecuteChanged();
+            ResumeCommand.NotifyCanExecuteChanged();
+            RemoveCommand.NotifyCanExecuteChanged();
         }
 
         private void Attach(TorrentMonitor? monitor)

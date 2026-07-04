@@ -83,6 +83,59 @@ namespace Ziusudra.Client
             }
         }
 
+        /// <summary>Pauses the specified torrents.</summary>
+        /// <param name="torrentIds">The identifiers of the torrents to pause.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        public Task PauseAsync(IEnumerable<string> torrentIds, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(torrentIds);
+            return SendCommandAsync(PauseTorrentsRequest.MethodName, new PauseTorrentsRequest(torrentIds), cancellationToken);
+        }
+
+        /// <summary>Resumes the specified torrents.</summary>
+        /// <param name="torrentIds">The identifiers of the torrents to resume.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        public Task ResumeAsync(IEnumerable<string> torrentIds, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(torrentIds);
+            return SendCommandAsync(ResumeTorrentsRequest.MethodName, new ResumeTorrentsRequest(torrentIds), cancellationToken);
+        }
+
+        /// <summary>Removes a torrent from the session.</summary>
+        /// <param name="torrentId">The identifier of the torrent to remove.</param>
+        /// <param name="removeData">Whether to also remove the downloaded data from disk.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns><c>true</c> if the torrent was removed.</returns>
+        public async Task<bool> RemoveAsync(string torrentId, bool removeData, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(torrentId);
+            RemoveTorrentRequest.Response response = await SendCommandAsync(RemoveTorrentRequest.MethodName, new RemoveTorrentRequest(torrentId, removeData), cancellationToken)
+                .ConfigureAwait(false);
+            return response.Success;
+        }
+
+        /// <summary>Gets a value indicating whether the connected daemon supports the specified <paramref name="method" />.</summary>
+        /// <param name="method">The fully-qualified RPC method name (for example <c>core.pause_torrents</c>).</param>
+        /// <returns><c>true</c> when the daemon advertises the method; <c>false</c> when it does not or while disconnected.</returns>
+        public bool Supports(string method)
+        {
+            return Capabilities?.HasMethod(method) ?? false;
+        }
+
+        private async Task<TResponse> SendCommandAsync<TResponse>(string method, RpcRequest<TResponse> request, CancellationToken cancellationToken)
+            where TResponse:
+                RpcResponse
+        {
+            IRpcClient? client = _Client;
+            if (State != SessionState.Connected || client is null)
+                throw new InvalidOperationException(SR.DelugeSession_CommandRequiresConnection);
+            if (!Supports(method))
+                throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, SR.DelugeSession_MethodNotSupported, method));
+
+            return await client.SendRequestAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         /// <summary>Disconnects from the daemon and returns the session to <see cref="SessionState.Disconnected" />.</summary>
         public async Task DisconnectAsync()
         {

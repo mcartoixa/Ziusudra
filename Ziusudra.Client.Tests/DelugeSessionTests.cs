@@ -130,6 +130,73 @@ namespace Ziusudra.Client.Tests
             Assert.Null(session.Capabilities);
         }
 
+        [Fact]
+        public async Task PauseAsync_ShouldSendPauseTorrentsWhenSupported()
+        {
+            FakeRpcClient client = CommandClient("core.pause_torrents", returnValue: null);
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            await session.PauseAsync(new[] { "h1" });
+
+            Assert.Contains("core.pause_torrents", client.SentMethods);
+        }
+
+        [Fact]
+        public async Task ResumeAsync_ShouldSendResumeTorrentsWhenSupported()
+        {
+            FakeRpcClient client = CommandClient("core.resume_torrents", returnValue: null);
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            await session.ResumeAsync(new[] { "h1" });
+
+            Assert.Contains("core.resume_torrents", client.SentMethods);
+        }
+
+        [Fact]
+        public async Task RemoveAsync_ShouldSendRemoveTorrentAndReturnTheResult()
+        {
+            FakeRpcClient client = CommandClient("core.remove_torrent", returnValue: true);
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            bool removed = await session.RemoveAsync("h1", removeData: true);
+
+            Assert.True(removed);
+            Assert.Contains("core.remove_torrent", client.SentMethods);
+        }
+
+        [Fact]
+        public async Task Command_ShouldThrowNotSupportedWhenTheMethodIsAbsent()
+        {
+            FakeRpcClient client = FullyScriptedClient();
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            await Assert.ThrowsAsync<NotSupportedException>(
+                async () => await session.PauseAsync(new[] { "h1" }));
+        }
+
+        [Fact]
+        public async Task Command_ShouldThrowWhenNotConnected()
+        {
+            await using var session = new DelugeSession(_ => FullyScriptedClient());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await session.PauseAsync(new[] { "h1" }));
+        }
+
+        private static FakeRpcClient CommandClient(string method, object? returnValue)
+        {
+            return new FakeRpcClient(Endpoint)
+                .Respond("daemon.info", "2.0.0")
+                .Respond("daemon.login", 5)
+                .Respond("daemon.set_event_interest", true)
+                .Respond("daemon.get_method_list", new[] { method })
+                .Respond(method, returnValue);
+        }
+
         private static FakeRpcClient FullyScriptedClient()
         {
             return new FakeRpcClient(Endpoint)

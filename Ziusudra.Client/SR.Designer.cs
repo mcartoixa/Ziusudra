@@ -70,6 +70,24 @@ namespace Ziusudra.Client {
         }
 
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à The session must be connected to run this command.
+        /// </summary>
+        internal static string DelugeSession_CommandRequiresConnection {
+            get {
+                return ResourceManager.GetString("DelugeSession_CommandRequiresConnection", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à The connected daemon does not support the '{0}' method.
+        /// </summary>
+        internal static string DelugeSession_MethodNotSupported {
+            get {
+                return ResourceManager.GetString("DelugeSession_MethodNotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Could not resolve the host '{0}'.
         /// </summary>
         internal static string DnsHostResolver_CouldNotResolveHost {
