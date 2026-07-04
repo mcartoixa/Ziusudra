@@ -1,0 +1,2 @@
+# The container init script runs in Linux; keep LF so the shebang survives a Windows checkout.
+custom-cont-init.d/* text eol=lf

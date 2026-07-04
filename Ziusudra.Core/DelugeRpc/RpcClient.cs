@@ -64,7 +64,7 @@ namespace Ziusudra.DelugeRpc
                 throw;
             }
 
-            using CancellationTokenRegistration ctr = cancellationToken.Register(() => {
+            await using CancellationTokenRegistration ctr = cancellationToken.Register(() => {
                 if (_ExpectedReplies.TryRemove(request.Id, out TaskCompletionSource<IServerReply>? task))
                     task.TrySetCanceled(cancellationToken);
             });

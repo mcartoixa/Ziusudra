@@ -1,0 +1,39 @@
+name: integration-tests
+
+on:
+  push:
+    paths-ignore:
+    - '.vscode/**'
+    - '.editorconfig'
+    - '**.md'
+    - 'LICENSE'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: global.json
+    - name: Restore tools
+      run: dotnet tool restore
+    - name: Build
+      shell: bash
+      run: |
+        source .build/setenv.sh
+        dotnet msbuild Ziusudra.proj /nologo /t:TestIntegration /m /mt /r /bl:build.binlog /nr:False /tl:off /fl /flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8
+    - name: Archive logs
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: logs
+        path: |
+          build.log
+          build.binlog
+        retention-days: 5

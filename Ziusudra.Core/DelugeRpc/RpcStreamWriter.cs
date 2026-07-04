@@ -67,13 +67,24 @@ namespace Ziusudra.DelugeRpc
             ms.Write(length);
 
             ms.Position = 0;
-            await ms.CopyToAsync(_Stream, cancellationToken);
+            // The frame is built in a private buffer; only the flush to the shared stream must be serialized.
+            // Callers may have several requests in flight at once, and overlapping writes would interleave frame
+            // bytes on the wire (an SslStream rejects them outright with "another write operation is pending").
+            await _WriteLock.WaitAsync(cancellationToken);
+            try
+            {
+                await ms.CopyToAsync(_Stream, cancellationToken);
+            } finally
+            {
+                _WriteLock.Release();
+            }
         }
 
         private void Dispose(bool disposing)
         {
             if (disposing)
             {
+                _WriteLock.Dispose();
                 if (!_LeaveOpen)
                     _Stream.Dispose();
             }
@@ -95,6 +106,7 @@ namespace Ziusudra.DelugeRpc
         private readonly bool _LeaveOpen;
         private ILogger _Logger = NullLogger.Instance;
         private readonly Stream _Stream;
+        private readonly SemaphoreSlim _WriteLock = new(1, 1);
 
         private const byte PROTOCOL_VERSION = 1;
     }

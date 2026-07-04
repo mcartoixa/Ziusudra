@@ -33,4 +33,58 @@
       Value="$(PACKAGE_VERSION)"
     />
   </Target>
+
+  <!-- Custom tests -->
+  <ItemGroup>
+    <DelugeServerVersion Include="2.1.1" />
+    <DelugeServerVersion Include="2.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <IntegrationTests Include="**\*.IntegrationTests.csproj" Exclude="tmp\**\*.IntegrationTests.csproj" />
+  </ItemGroup>
+
+  <!-- In GitHub Actions Windows runners can only execute Windows containers -->
+  <Target
+    Name="TestIntegration"
+    AfterTargets="TestCustom"
+    Condition="'$(GITHUB_ACTIONS)'!='true' Or '$(RUNNER_OS)'=='Linux'"
+    Outputs="$(BuildTestIntermediateOutputPath)results\deluge-%(DelugeServerVersion.Identity)\dummy.xml"
+  >
+    <PropertyGroup>
+      <_DelugeServerVersion>%(DelugeServerVersion.Identity)</_DelugeServerVersion>
+    </PropertyGroup>
+    <ItemGroup>
+      <TestedProjects Include="%(IntegrationTests.Filename)-$(_DelugeServerVersion).dummy" />
+    </ItemGroup>
+
+    <Exec
+      Command="docker compose -f docker-compose.yml down"
+      WorkingDirectory="$(MSBuildProjectDirectory)\test\deluge"
+      IgnoreExitCode="True"
+      StandardOutputImportance="Low"
+    />
+    <Exec
+      Command="docker compose -f docker-compose.yml up -d --force-recreate --quiet-pull --wait"
+      WorkingDirectory="$(MSBuildProjectDirectory)\test\deluge"
+      EnvironmentVariables="DELUGE_IMAGE_TAG=$(_DelugeServerVersion)"
+      StandardOutputImportance="Low"
+    />
+    <Exec
+      Command="pwsh -File wait-for-deluged.ps1"
+      WorkingDirectory="$(MSBuildProjectDirectory)\test\deluge"
+      StandardOutputImportance="Low"
+    />
+
+    <Exec
+      Command="dotnet test &quot;%(IntegrationTests.Identity)&quot; --logger &quot;xunit&quot; --results-directory &quot;$(BuildTestIntermediateOutputPath)results\%(IntegrationTests.Filename)-$(_DelugeServerVersion)&quot;@(_CommonProjectProperties->' /p:%(Identity)', '')"
+      WorkingDirectory="$(InputPath)"
+      EnvironmentVariables="ZIUSUDRA_DELUGE_HOST=127.0.0.1;ZIUSUDRA_DELUGE_PORT=58846;ZIUSUDRA_DELUGE_USERNAME=deluge;ZIUSUDRA_DELUGE_PASSWORD=deluge"
+    />
+
+    <Exec
+      Command="docker compose -f docker-compose.yml down"
+      WorkingDirectory="$(MSBuildProjectDirectory)\test\deluge"
+      StandardOutputImportance="Low"
+    />
+  </Target>
 </Project>

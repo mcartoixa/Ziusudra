@@ -42,8 +42,7 @@ namespace Ziusudra.DelugeRpc.Core
 
         /// <summary>Create a new instance of the <see cref="GetFilterTreeRequest" /> type.</summary>
         public GetFilterTreeRequest()
-        {
-        }
+        { }
 
         /// <summary>Create a new instance of the <see cref="GetFilterTreeRequest" /> type.</summary>
         /// <param name="showZeroHits">Whether to show filters with no corresponding torrents.</param>

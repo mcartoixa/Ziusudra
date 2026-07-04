@@ -51,5 +51,4 @@ jobs:
         path: |
           build.log
           build.binlog
-          tmp/**/*.log
         retention-days: 5

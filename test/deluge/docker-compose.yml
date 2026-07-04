@@ -1,0 +1,12 @@
+services:
+  deluge:
+    image: lscr.io/linuxserver/deluge:${DELUGE_IMAGE_TAG:-latest}
+    container_name: ziusudra-deluge
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    ports:
+      - "58846:58846"
+    volumes:
+      - ./custom-cont-init.d:/custom-cont-init.d:ro

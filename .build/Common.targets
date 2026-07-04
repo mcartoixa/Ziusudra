@@ -236,12 +236,15 @@
     </ItemGroup>
     <Exec
       Condition="'$(MSBuildRuntimeType)'!='Core'"
-      Command="dotnet msbuild &quot;%(TestedProjects.Identity)&quot; /t:VSTest /restore:false /p:Configuration=%(TestedProjects.Configuration) /p:Platform=&quot;%(TestedProjects.Platform)&quot; /p:BaseBuildOutputPath=&quot;$(BuildObjectsIntermediateOutputPath).&quot; /p:CustomBeforeDirectoryBuildProps=&quot;$(CustomBeforeDirectoryBuildProps)&quot;@(_TestProperties->' /p:%(Identity)', '')$(_VsTestRunSettingsCliArg)"
+      Command="dotnet msbuild &quot;%(TestedProjects.Identity)&quot; /t:VSTest /restore:false /p:Configuration=%(TestedProjects.Configuration) /p:Platform=&quot;%(TestedProjects.Platform)&quot;@(_TestProperties->' /p:%(Identity)', '')$(_VsTestRunSettingsCliArg)"
       YieldDuringToolExecution="True"
     />
 
     <OnError ExecuteTargets="_CopyTestResults" />
   </Target>
+  
+  <!-- Entry point for custom tests -->
+  <Target Name="TestCustom" AfterTargets="_TestProjects" />
 
   <Target Name="_CopyTestResults"
     Outputs="$(BuildTestArtefactsOutputPath)%(TestedProjects.Filename)-xunit-results.xml"

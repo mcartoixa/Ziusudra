@@ -57,7 +57,9 @@ namespace Ziusudra.Client.IntegrationTests
                 string candidate = Path.Combine(directory.FullName, ".env");
                 if (File.Exists(candidate))
                 {
-                    DotNetEnv.Env.Load(candidate);
+                    // Real environment variables win over the .env file, so an inline or CI-provided value
+                    // is never clobbered by a local .env (standard dotenv precedence).
+                    DotNetEnv.Env.Load(candidate, new DotNetEnv.LoadOptions(setEnvVars: true, clobberExistingVars: false, onlyExactPath: true));
                     return;
                 }
             }

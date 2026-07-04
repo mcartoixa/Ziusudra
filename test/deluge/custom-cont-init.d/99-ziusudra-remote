@@ -1,0 +1,23 @@
+#!/usr/bin/with-contenv bash
+# Prepare a throwaway Deluge daemon for the integration tests. This runs before the daemon
+# starts, so the settings are in place the first time it binds its RPC socket.
+#
+#   - allow_remote=true makes deluged listen on all interfaces (rpcserver.py binds to '' when
+#     set, 'localhost' otherwise) so the published port is reachable from the host.
+#   - a known account is seeded into the auth file. Deluge stores account passwords hashed, but
+#     falls back to plaintext comparison on an unrecognised hash (authmanager.py), so a plaintext
+#     'user:pass:level' line authenticates. Level 10 is admin.
+#
+# These credentials are for a disposable local container only — never a real daemon.
+
+mkdir -p /config
+
+if [ ! -f /config/core.conf ]; then
+    printf '{\n    "file": 1,\n    "format": 1\n}{\n    "allow_remote": true\n}\n' > /config/core.conf
+else
+    sed -i 's/"allow_remote": false/"allow_remote": true/' /config/core.conf
+fi
+
+grep -q '^deluge:' /config/auth 2>/dev/null || echo 'deluge:deluge:10' >> /config/auth
+
+chown abc:users /config/core.conf /config/auth 2>/dev/null || true

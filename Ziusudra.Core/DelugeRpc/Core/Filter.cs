@@ -82,10 +82,10 @@ namespace Ziusudra.DelugeRpc.Core
         }
 
         /// <summary>Gets or sets the category of the filter.</summary>
-        public string Category { get; set; }
+        public string Category { get; init; }
 
         /// <summary>Gets or sets the value of the filter.</summary>
-        public required string Value { get; set; }
+        public required string Value { get; init; }
 
         /// <summary>Gets or sets the number of torrents matching the filter.</summary>
         public int? Count { get; set; }
