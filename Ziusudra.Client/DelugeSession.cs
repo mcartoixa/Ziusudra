@@ -114,6 +114,32 @@ namespace Ziusudra.Client
             return response.Success;
         }
 
+        /// <summary>Adds a torrent from a magnet link.</summary>
+        /// <param name="magnetUri">The magnet link.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The identifier of the added torrent, or <c>null</c>.</returns>
+        public async Task<string?> AddMagnetAsync(string magnetUri, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(magnetUri);
+            AddTorrentMagnetRequest.Response response = await SendCommandAsync(AddTorrentMagnetRequest.MethodName, new AddTorrentMagnetRequest(magnetUri), cancellationToken)
+                .ConfigureAwait(false);
+            return response.TorrentId;
+        }
+
+        /// <summary>Adds a torrent from the contents of a torrent file.</summary>
+        /// <param name="fileName">The name of the torrent file.</param>
+        /// <param name="fileContent">The raw contents of the torrent file.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The identifier of the added torrent, or <c>null</c>.</returns>
+        public async Task<string?> AddTorrentFileAsync(string fileName, byte[] fileContent, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(fileName);
+            ArgumentNullException.ThrowIfNull(fileContent);
+            AddTorrentFileRequest.Response response = await SendCommandAsync(AddTorrentFileRequest.MethodName, new AddTorrentFileRequest(fileName, fileContent), cancellationToken)
+                .ConfigureAwait(false);
+            return response.TorrentId;
+        }
+
         /// <summary>Gets a value indicating whether the connected daemon supports the specified <paramref name="method" />.</summary>
         /// <param name="method">The fully-qualified RPC method name (for example <c>core.pause_torrents</c>).</param>
         /// <returns><c>true</c> when the daemon advertises the method; <c>false</c> when it does not or while disconnected.</returns>

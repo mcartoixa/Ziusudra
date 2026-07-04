@@ -1,10 +1,13 @@
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
+using WinRT.Interop;
 
 namespace Ziusudra.Desktop
 {
 
-    /// <summary>The application shell window, hosting the connection manager.</summary>
+    /// <summary>The application shell window, hosting the connection manager and torrent list.</summary>
     public sealed partial class MainWindow:
         Window
     {
@@ -17,6 +20,7 @@ namespace Ziusudra.Desktop
             ArgumentNullException.ThrowIfNull(viewModel);
             ArgumentNullException.ThrowIfNull(torrents);
             _ViewModel = viewModel;
+            _Torrents = torrents;
 
             InitializeComponent();
             if (Content is FrameworkElement root)
@@ -37,6 +41,29 @@ namespace Ziusudra.Desktop
             _ViewModel.Password = PasswordInput.Password;
         }
 
+        private async void OnAddFileClick(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileOpenPicker();
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+            picker.FileTypeFilter.Add(".torrent");
+
+            StorageFile? file = await picker.PickSingleFileAsync();
+            if (file is null)
+                return;
+
+            byte[] content;
+            using (IRandomAccessStreamWithContentType stream = await file.OpenReadAsync())
+            using (var reader = new DataReader(stream))
+            {
+                await reader.LoadAsync((uint)stream.Size);
+                content = new byte[stream.Size];
+                reader.ReadBytes(content);
+            }
+
+            await _Torrents.AddFileAsync(file.Name, content);
+        }
+
         private readonly ViewModel.ConnectionManager _ViewModel;
+        private readonly ViewModel.TorrentList _Torrents;
     }
 }

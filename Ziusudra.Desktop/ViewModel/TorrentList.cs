@@ -42,6 +42,41 @@ namespace Ziusudra.Desktop.ViewModel
         [ObservableProperty]
         private string _CommandStatus = string.Empty;
 
+        /// <summary>The magnet link to add.</summary>
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(AddMagnetCommand))]
+        private string _NewMagnet = string.Empty;
+
+        /// <summary>Gets a value indicating whether a torrent file can be added to the connected daemon.</summary>
+        public bool CanAddFile => _Session.State == SessionState.Connected && _Session.Supports(AddTorrentFileRequest.MethodName);
+
+        /// <summary>Adds the torrent at <see cref="NewMagnet" /> from its magnet link.</summary>
+        [RelayCommand(CanExecute = nameof(CanAddMagnet))]
+        private Task AddMagnetAsync()
+        {
+            string magnet = NewMagnet;
+            if (string.IsNullOrWhiteSpace(magnet))
+                return Task.CompletedTask;
+
+            return RunAsync(async () => {
+                await _Session.AddMagnetAsync(magnet);
+                NewMagnet = string.Empty;
+            });
+        }
+
+        private bool CanAddMagnet()
+        {
+            return !string.IsNullOrWhiteSpace(NewMagnet) && _Session.State == SessionState.Connected && _Session.Supports(AddTorrentMagnetRequest.MethodName);
+        }
+
+        /// <summary>Adds a torrent from the contents of a picked torrent file. The picking itself is the view's concern.</summary>
+        /// <param name="fileName">The name of the torrent file.</param>
+        /// <param name="content">The raw contents of the torrent file.</param>
+        public Task AddFileAsync(string fileName, byte[] content)
+        {
+            return RunAsync(() => _Session.AddTorrentFileAsync(fileName, content));
+        }
+
         /// <summary>Pauses the selected torrent.</summary>
         [RelayCommand(CanExecute = nameof(CanPause))]
         private Task PauseAsync()
@@ -104,6 +139,8 @@ namespace Ziusudra.Desktop.ViewModel
             PauseCommand.NotifyCanExecuteChanged();
             ResumeCommand.NotifyCanExecuteChanged();
             RemoveCommand.NotifyCanExecuteChanged();
+            AddMagnetCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(CanAddFile));
         }
 
         private void Attach(TorrentMonitor? monitor)

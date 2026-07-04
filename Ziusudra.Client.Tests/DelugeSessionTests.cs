@@ -168,6 +168,32 @@ namespace Ziusudra.Client.Tests
         }
 
         [Fact]
+        public async Task AddMagnetAsync_ShouldSendAddTorrentMagnetAndReturnTheId()
+        {
+            FakeRpcClient client = CommandClient("core.add_torrent_magnet", returnValue: "newhash");
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            string? id = await session.AddMagnetAsync("magnet:?xt=urn:btih:abc");
+
+            Assert.Equal("newhash", id);
+            Assert.Contains("core.add_torrent_magnet", client.SentMethods);
+        }
+
+        [Fact]
+        public async Task AddTorrentFileAsync_ShouldSendAddTorrentFileAndReturnTheId()
+        {
+            FakeRpcClient client = CommandClient("core.add_torrent_file", returnValue: "newhash");
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            string? id = await session.AddTorrentFileAsync("a.torrent", new byte[] { 1, 2, 3 });
+
+            Assert.Equal("newhash", id);
+            Assert.Contains("core.add_torrent_file", client.SentMethods);
+        }
+
+        [Fact]
         public async Task Command_ShouldThrowNotSupportedWhenTheMethodIsAbsent()
         {
             FakeRpcClient client = FullyScriptedClient();
