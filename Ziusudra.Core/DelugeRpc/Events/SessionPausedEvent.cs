@@ -4,7 +4,7 @@ namespace Ziusudra.DelugeRpc.Events
 {
 
     /// <summary>Emitted when the session has been paused.</summary>
-    internal class SessionPausedEvent:
+    public class SessionPausedEvent:
         RpcEvent
     {
 

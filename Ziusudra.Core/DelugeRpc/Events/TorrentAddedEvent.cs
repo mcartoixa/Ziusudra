@@ -5,7 +5,7 @@ namespace Ziusudra.DelugeRpc.Events
 {
 
     /// <summary>Emitted when a new torrent is successfully added to the session.</summary>
-    internal class TorrentAddedEvent:
+    public class TorrentAddedEvent:
         RpcEvent
     {
 

@@ -70,11 +70,13 @@ namespace Ziusudra.Client.Tests
 
         public List<string> SentMethods { get; } = new();
 
-        // Required by IRpcClient. The session does not consume events until the monitor lands in a later step,
-        // so this fake has no reason to raise it yet.
-#pragma warning disable CS0067
+        /// <summary>Raises <see cref="RpcEventReceived" /> with the given <paramref name="event" />, as the wire loop would.</summary>
+        public void Raise(RpcEvent @event)
+        {
+            RpcEventReceived?.Invoke(this, new RpcEventReceivedEventArgs(@event));
+        }
+
         public event EventHandler<RpcEventReceivedEventArgs>? RpcEventReceived;
-#pragma warning restore CS0067
 
         private readonly Dictionary<string, Func<object?>> _Responses = new(StringComparer.Ordinal);
     }

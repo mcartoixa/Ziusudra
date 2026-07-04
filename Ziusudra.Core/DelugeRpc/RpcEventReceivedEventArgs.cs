@@ -7,8 +7,8 @@
     {
 
         /// <summary>Creates a new instance of the <see cref="RpcEventReceivedEventArgs" /> type.</summary>
-        /// <param name="event"></param>
-        internal RpcEventReceivedEventArgs(RpcEvent @event)
+        /// <param name="event">The event sent by the server.</param>
+        public RpcEventReceivedEventArgs(RpcEvent @event)
         {
             Event = @event;
         }

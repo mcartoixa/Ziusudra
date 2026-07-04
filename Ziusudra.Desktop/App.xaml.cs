@@ -44,7 +44,8 @@ namespace Ziusudra.Desktop
             services.AddSingleton<IHostStore>(_ => new JsonHostStore(HostStorePath));
             services.AddSingleton<IHostResolver, DnsHostResolver>();
             services.AddSingleton<ConnectionManager>();
-            services.AddSingleton<ConnectionManagerViewModel>();
+            services.AddSingleton<ViewModel.ConnectionManager>();
+            services.AddSingleton<ViewModel.TorrentList>();
 
             services.AddTransient<MainWindow>();
         }

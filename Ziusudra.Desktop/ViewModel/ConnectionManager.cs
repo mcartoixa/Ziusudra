@@ -4,20 +4,20 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Ziusudra.Client;
 
-namespace Ziusudra.Desktop
+namespace Ziusudra.Desktop.ViewModel
 {
 
     /// <summary>Presents the connection manager: the saved host list plus connect/authenticate against the daemon.</summary>
-    /// <remarks>A thin wrapper over <see cref="ConnectionManager" />; the logic lives there so it stays unit-testable.
+    /// <remarks>A thin wrapper over <see cref="Client.ConnectionManager" />; the logic lives there so it stays unit-testable.
     /// Session state changes arrive on a background thread and are marshalled onto the UI thread via <see cref="IUIDispatcher" />.</remarks>
-    public sealed partial class ConnectionManagerViewModel:
+    public sealed partial class ConnectionManager:
         ObservableObject
     {
 
-        /// <summary>Create a new instance of the <see cref="ConnectionManagerViewModel" /> type.</summary>
+        /// <summary>Create a new instance of the <see cref="ConnectionManager" /> type.</summary>
         /// <param name="connections">The connection manager.</param>
         /// <param name="dispatcher">The UI dispatcher.</param>
-        public ConnectionManagerViewModel(ConnectionManager connections, IUIDispatcher dispatcher)
+        public ConnectionManager(Client.ConnectionManager connections, IUIDispatcher dispatcher)
         {
             ArgumentNullException.ThrowIfNull(connections);
             ArgumentNullException.ThrowIfNull(dispatcher);
@@ -145,7 +145,7 @@ namespace Ziusudra.Desktop
             };
         }
 
-        private readonly ConnectionManager _Connections;
+        private readonly Client.ConnectionManager _Connections;
         private readonly IUIDispatcher _Dispatcher;
     }
 }

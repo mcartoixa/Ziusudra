@@ -4,7 +4,7 @@ namespace Ziusudra.DelugeRpc.Events
 {
 
     /// <summary>Emitted when a torrent has been removed from the session.</summary>
-    internal class TorrentRemovedEvent:
+    public class TorrentRemovedEvent:
         RpcEvent
     {
 

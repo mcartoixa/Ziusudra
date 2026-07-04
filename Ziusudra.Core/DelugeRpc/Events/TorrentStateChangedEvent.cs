@@ -4,7 +4,7 @@ namespace Ziusudra.DelugeRpc.Events
 {
 
     /// <summary>Emitted when a torrent changes state.</summary>
-    internal class TorrentStateChangedEvent:
+    public class TorrentStateChangedEvent:
         RpcEvent
     {
 

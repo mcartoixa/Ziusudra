@@ -3,46 +3,81 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Ziusudra">
-    <Grid Padding="16" ColumnSpacing="16">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+    <Grid Padding="16" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <StackPanel Grid.Column="0" Spacing="8">
-            <TextBlock Text="Hosts" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <ListView ItemsSource="{Binding Hosts}"
-                      SelectedItem="{Binding SelectedHost, Mode=TwoWay}"
-                      Height="200"
-                      BorderThickness="1"
-                      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" />
-                            <TextBlock Text="{Binding Host}" Opacity="0.7" FontSize="12" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-            <Button Content="Remove" Command="{Binding RemoveHostCommand}" />
+        <Grid Grid.Row="0" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            <TextBlock Text="Add a host" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
-            <TextBox Header="Name" Text="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBox Header="Host" Text="{Binding NewHost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBox Header="Port" Text="{Binding NewPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBox Header="User name" Text="{Binding NewUsername, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="Add" Command="{Binding AddHostCommand}" />
-        </StackPanel>
+            <StackPanel Grid.Column="0" Spacing="8">
+                <TextBlock Text="Hosts" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <ListView ItemsSource="{Binding Hosts}"
+                          SelectedItem="{Binding SelectedHost, Mode=TwoWay}"
+                          Height="200"
+                          BorderThickness="1"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" />
+                                <TextBlock Text="{Binding Host}" Opacity="0.7" FontSize="12" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Button Content="Remove" Command="{Binding RemoveHostCommand}" />
 
-        <StackPanel Grid.Column="1" Spacing="8">
-            <TextBlock Text="Connection" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <PasswordBox x:Name="PasswordInput" Header="Password" PasswordChanged="OnPasswordChanged" />
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="Connect" Command="{Binding ConnectCommand}" />
-                <Button Content="Disconnect" Command="{Binding DisconnectCommand}" />
+                <TextBlock Text="Add a host" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+                <TextBox Header="Name" Text="{Binding NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Header="Host" Text="{Binding NewHost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Header="Port" Text="{Binding NewPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Header="User name" Text="{Binding NewUsername, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Content="Add" Command="{Binding AddHostCommand}" />
             </StackPanel>
-            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Margin="0,12,0,0" />
-        </StackPanel>
+
+            <StackPanel Grid.Column="1" Spacing="8">
+                <TextBlock Text="Connection" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <PasswordBox x:Name="PasswordInput" Header="Password" PasswordChanged="OnPasswordChanged" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Connect" Command="{Binding ConnectCommand}" />
+                    <Button Content="Disconnect" Command="{Binding DisconnectCommand}" />
+                </StackPanel>
+                <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Margin="0,12,0,0" />
+            </StackPanel>
+        </Grid>
+
+        <ListView Grid.Row="1" x:Name="TorrentListView" ItemsSource="{Binding Torrents}"
+                  BorderThickness="1"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+            <ListView.HeaderTemplate>
+                <DataTemplate>
+                    <TextBlock Text="Torrents" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,8" />
+                </DataTemplate>
+            </ListView.HeaderTemplate>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnSpacing="12" Padding="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" Text="{Binding State}" />
+                        <ProgressBar Grid.Column="2" Value="{Binding Progress}" Maximum="1" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="3" Text="{Binding DownloadRate}" />
+                        <TextBlock Grid.Column="4" Text="{Binding UploadRate}" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </Window>

@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="Ziusudra.Client.IntegrationTests/Ziusudra.Client.IntegrationTests.csproj" />
   <Project Path="Ziusudra.Client.Tests/Ziusudra.Client.Tests.csproj" />
   <Project Path="Ziusudra.Client/Ziusudra.Client.csproj" />
   <Project Path="Ziusudra.Core.Tests/Ziusudra.Core.Tests.csproj" />

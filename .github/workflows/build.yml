@@ -26,7 +26,7 @@ jobs:
     - name: Build
       shell: cmd
       run: |
-        CALL .build/SetEnv.bat
+        CALL .build\SetEnv.bat
         msbuild.exe Ziusudra.proj /nologo /t:Release /m /mt /r /fl /flp:logfile=build.log;verbosity=diagnostic;encoding=UTF-8 /bl:build.binlog /nr:False /tl:off
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v7

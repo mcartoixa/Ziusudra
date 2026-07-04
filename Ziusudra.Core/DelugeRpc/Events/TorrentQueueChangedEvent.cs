@@ -4,7 +4,7 @@ namespace Ziusudra.DelugeRpc.Events
 {
 
     /// <summary>Emitted when the queue order has changed.</summary>
-    internal class TorrentQueueChangedEvent:
+    public class TorrentQueueChangedEvent:
         RpcEvent
     {
 

@@ -72,6 +72,8 @@ namespace Ziusudra.Client
                 }
 
                 Capabilities = new ServerCapabilities(info.Version, libtorrentVersion, methods);
+                _Monitor = new TorrentMonitor(client, TorrentStatusFields.Default);
+                _Monitor.Start();
                 SetState(SessionState.Connected);
             } catch
             {
@@ -84,6 +86,8 @@ namespace Ziusudra.Client
         /// <summary>Disconnects from the daemon and returns the session to <see cref="SessionState.Disconnected" />.</summary>
         public async Task DisconnectAsync()
         {
+            await StopMonitorAsync()
+                .ConfigureAwait(false);
             IRpcClient? client = _Client;
             if (client != null)
                 await client.StopAsync()
@@ -97,6 +101,8 @@ namespace Ziusudra.Client
         /// <returns>A task that completes when the session has been released.</returns>
         public async ValueTask DisposeAsync()
         {
+            await StopMonitorAsync()
+                .ConfigureAwait(false);
             IRpcClient? client = _Client;
             if (client != null)
                 await client.StopAsync()
@@ -106,12 +112,23 @@ namespace Ziusudra.Client
 
         private async Task FaultAsync(IRpcClient client)
         {
+            await StopMonitorAsync()
+                .ConfigureAwait(false);
             Reset();
             SetState(SessionState.Faulted);
             if (ReferenceEquals(_Client, client))
                 _Client = null;
             await client.StopAsync()
                 .ConfigureAwait(false);
+        }
+
+        private async Task StopMonitorAsync()
+        {
+            TorrentMonitor? monitor = _Monitor;
+            _Monitor = null;
+            if (monitor != null)
+                await monitor.DisposeAsync()
+                    .ConfigureAwait(false);
         }
 
         private void Reset()
@@ -137,6 +154,9 @@ namespace Ziusudra.Client
         /// <summary>Gets the authentication level granted by the daemon on the last successful login.</summary>
         public int AuthenticationLevel { get; private set; }
 
+        /// <summary>Gets the torrent monitor for the current connection, or <c>null</c> while not connected.</summary>
+        public TorrentMonitor? Torrents => _Monitor;
+
         /// <summary>Gets the endpoint of the current connection, or <c>null</c> while not connected.</summary>
         public IPEndPoint? Host => _Client?.Host;
 
@@ -147,5 +167,6 @@ namespace Ziusudra.Client
 
         private readonly Func<IPEndPoint, IRpcClient> _ClientFactory;
         private IRpcClient? _Client;
+        private TorrentMonitor? _Monitor;
     }
 }
