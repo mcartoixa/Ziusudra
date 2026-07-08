@@ -76,7 +76,8 @@
             </StackPanel>
 
             <ListView Grid.Row="2" ItemsSource="{Binding Torrents}"
-                      SelectedItem="{Binding SelectedTorrent, Mode=TwoWay}"
+                      SelectionMode="Extended"
+                      SelectionChanged="OnTorrentSelectionChanged"
                       BorderThickness="1"
                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
                 <ListView.HeaderTemplate>

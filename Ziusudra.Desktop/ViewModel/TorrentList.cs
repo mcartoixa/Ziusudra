@@ -31,12 +31,24 @@ namespace Ziusudra.Desktop.ViewModel
         /// <summary>Gets the bound torrent rows.</summary>
         public ObservableCollection<TorrentRow> Torrents { get; } = new();
 
-        /// <summary>The row selected in the list, whose fields the details tabs present.</summary>
+        /// <summary>The row whose fields the details tabs present: the single selection, empty when zero or many rows are selected.</summary>
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(PauseCommand))]
-        [NotifyCanExecuteChangedFor(nameof(ResumeCommand))]
-        [NotifyPropertyChangedFor(nameof(CanRemove))]
         private TorrentRow? _SelectedTorrent;
+
+        /// <summary>Gets the rows currently selected in the list; the commands act over this whole set.</summary>
+        public IReadOnlyList<TorrentRow> Selection => _Selection;
+
+        /// <summary>Records the current list selection. The view owns extended selection and pushes it here.</summary>
+        /// <param name="selected">The rows now selected.</param>
+        public void SetSelection(IReadOnlyList<TorrentRow> selected)
+        {
+            ArgumentNullException.ThrowIfNull(selected);
+            _Selection = selected;
+            SelectedTorrent = selected.Count == 1 ? selected[0] : null;
+            PauseCommand.NotifyCanExecuteChanged();
+            ResumeCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(CanRemove));
+        }
 
         /// <summary>The message from the last command, shown to the user; empty when it succeeded.</summary>
         [ObservableProperty]
@@ -77,40 +89,49 @@ namespace Ziusudra.Desktop.ViewModel
             return RunAsync(() => _Session.AddTorrentFileAsync(fileName, content));
         }
 
-        /// <summary>Pauses the selected torrent.</summary>
+        /// <summary>Pauses the selected torrents.</summary>
         [RelayCommand(CanExecute = nameof(CanPause))]
         private Task PauseAsync()
         {
-            TorrentRow? selected = SelectedTorrent;
-            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.PauseAsync(new[] { selected.Hash }));
+            string[] ids = SelectedIds();
+            return ids.Length == 0 ? Task.CompletedTask : RunAsync(() => _Session.PauseAsync(ids));
         }
 
         private bool CanPause() => CanCommand(PauseTorrentsRequest.MethodName);
 
-        /// <summary>Resumes the selected torrent.</summary>
+        /// <summary>Resumes the selected torrents.</summary>
         [RelayCommand(CanExecute = nameof(CanResume))]
         private Task ResumeAsync()
         {
-            TorrentRow? selected = SelectedTorrent;
-            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.ResumeAsync(new[] { selected.Hash }));
+            string[] ids = SelectedIds();
+            return ids.Length == 0 ? Task.CompletedTask : RunAsync(() => _Session.ResumeAsync(ids));
         }
 
         private bool CanResume() => CanCommand(ResumeTorrentsRequest.MethodName);
 
-        /// <summary>Gets a value indicating whether the selected torrent can be removed from the connected daemon.</summary>
-        public bool CanRemove => CanCommand(RemoveTorrentRequest.MethodName);
+        /// <summary>Gets a value indicating whether the selected torrents can be removed from the connected daemon.</summary>
+        public bool CanRemove => CanCommand(RemoveTorrentsRequest.MethodName);
 
-        /// <summary>Removes the selected torrent. Whether to also delete its data is the caller's choice, gathered by the view.</summary>
-        /// <param name="removeData">Whether to delete the torrent's downloaded data from disk.</param>
+        /// <summary>Removes the selected torrents. Whether to also delete their data is the caller's choice, gathered by the view.</summary>
+        /// <param name="removeData">Whether to delete the torrents' downloaded data from disk.</param>
         public Task RemoveSelectedAsync(bool removeData)
         {
-            TorrentRow? selected = SelectedTorrent;
-            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.RemoveAsync(selected.Hash, removeData));
+            string[] ids = SelectedIds();
+            if (ids.Length == 0)
+                return Task.CompletedTask;
+
+            return RunAsync(async () => {
+                IReadOnlyList<RemoveTorrentError> errors = await _Session.RemoveAsync(ids, removeData);
+                if (errors.Count > 0)
+                    CommandStatus = $"Failed to remove {errors.Count} of {ids.Length} torrents.";
+            });
         }
+
+        private string[] SelectedIds() => _Selection.Select(row => row.Hash).ToArray();
 
         private bool CanCommand(string method)
         {
-            return SelectedTorrent != null && _Session.State == SessionState.Connected && _Session.Supports(method);
+            return _Selection.Count > 0 && _Session.State == SessionState.Connected && _Session.Supports(method);
         }
 
         private async Task RunAsync(Func<Task> command)
@@ -212,6 +233,7 @@ namespace Ziusudra.Desktop.ViewModel
         private readonly DelugeSession _Session;
         private readonly IUIDispatcher _Dispatcher;
         private readonly Dictionary<string, TorrentRow> _Rows = new(StringComparer.Ordinal);
+        private IReadOnlyList<TorrentRow> _Selection = Array.Empty<TorrentRow>();
         private TorrentMonitor? _Attached;
     }
 }

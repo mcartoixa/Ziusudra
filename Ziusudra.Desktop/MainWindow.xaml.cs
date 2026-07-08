@@ -64,17 +64,27 @@ namespace Ziusudra.Desktop
             await _Torrents.AddFileAsync(file.Name, content);
         }
 
+        private void OnTorrentSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var list = (ListView)sender;
+            _Torrents.SetSelection(list.SelectedItems.OfType<ViewModel.TorrentRow>().ToList());
+        }
+
         private async void OnRemoveClick(object sender, RoutedEventArgs e)
         {
-            ViewModel.TorrentRow? selected = _Torrents.SelectedTorrent;
-            if (selected is null)
+            IReadOnlyList<ViewModel.TorrentRow> selection = _Torrents.Selection;
+            if (selection.Count == 0)
                 return;
+
+            string prompt = selection.Count == 1
+                ? $"Remove “{selection[0].Name}” from the session?"
+                : $"Remove {selection.Count} torrents from the session?";
 
             var deleteData = new CheckBox { Content = "Also delete the downloaded data from disk" };
             var body = new StackPanel { Spacing = 12 };
             body.Children.Add(new TextBlock
             {
-                Text = $"Remove “{selected.Name}” from the session?",
+                Text = prompt,
                 TextWrapping = TextWrapping.WrapWholeWords,
             });
             body.Children.Add(deleteData);

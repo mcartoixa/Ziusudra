@@ -114,6 +114,19 @@ namespace Ziusudra.Client
             return response.Success;
         }
 
+        /// <summary>Removes several torrents from the session in a single request.</summary>
+        /// <param name="torrentIds">The identifiers of the torrents to remove.</param>
+        /// <param name="removeData">Whether to also remove the downloaded data from disk.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The torrents that could not be removed; empty when every torrent was removed.</returns>
+        public async Task<IReadOnlyList<RemoveTorrentError>> RemoveAsync(IEnumerable<string> torrentIds, bool removeData, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(torrentIds);
+            RemoveTorrentsRequest.Response response = await SendCommandAsync(RemoveTorrentsRequest.MethodName, new RemoveTorrentsRequest(torrentIds, removeData), cancellationToken)
+                .ConfigureAwait(false);
+            return response.Errors.ToArray();
+        }
+
         /// <summary>Adds a torrent from a magnet link.</summary>
         /// <param name="magnetUri">The magnet link.</param>
         /// <param name="cancellationToken">The cancellation token.</param>

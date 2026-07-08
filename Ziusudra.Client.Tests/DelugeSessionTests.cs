@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
+using Ziusudra.DelugeRpc.Core;
 
 namespace Ziusudra.Client.Tests
 {
@@ -165,6 +166,33 @@ namespace Ziusudra.Client.Tests
 
             Assert.True(removed);
             Assert.Contains("core.remove_torrent", client.SentMethods);
+        }
+
+        [Fact]
+        public async Task RemoveAsync_ShouldSendRemoveTorrentsAndReportNoErrorsOnSuccess()
+        {
+            FakeRpcClient client = CommandClient("core.remove_torrents", returnValue: Array.Empty<object>());
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            IReadOnlyList<RemoveTorrentError> errors = await session.RemoveAsync(new[] { "h1", "h2" }, removeData: true);
+
+            Assert.Empty(errors);
+            Assert.Contains("core.remove_torrents", client.SentMethods);
+        }
+
+        [Fact]
+        public async Task RemoveAsync_ShouldReturnTheReportedRemovalErrors()
+        {
+            FakeRpcClient client = CommandClient("core.remove_torrents", returnValue: new object[] { new object[] { "h2", "Torrent not found" } });
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            IReadOnlyList<RemoveTorrentError> errors = await session.RemoveAsync(new[] { "h1", "h2" }, removeData: false);
+
+            RemoveTorrentError error = Assert.Single(errors);
+            Assert.Equal("h2", error.TorrentId);
+            Assert.Equal("Torrent not found", error.Message);
         }
 
         [Fact]
