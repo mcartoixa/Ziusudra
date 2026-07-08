@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
@@ -61,6 +62,37 @@ namespace Ziusudra.Desktop
             }
 
             await _Torrents.AddFileAsync(file.Name, content);
+        }
+
+        private async void OnRemoveClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.TorrentRow? selected = _Torrents.SelectedTorrent;
+            if (selected is null)
+                return;
+
+            var deleteData = new CheckBox { Content = "Also delete the downloaded data from disk" };
+            var body = new StackPanel { Spacing = 12 };
+            body.Children.Add(new TextBlock
+            {
+                Text = $"Remove “{selected.Name}” from the session?",
+                TextWrapping = TextWrapping.WrapWholeWords,
+            });
+            body.Children.Add(deleteData);
+
+            var dialog = new ContentDialog
+            {
+                Title = "Remove torrent",
+                Content = body,
+                PrimaryButtonText = "Remove",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = Content.XamlRoot,
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
+            await _Torrents.RemoveSelectedAsync(deleteData.IsChecked == true);
         }
 
         private readonly ViewModel.ConnectionManager _ViewModel;

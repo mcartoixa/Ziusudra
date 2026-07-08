@@ -35,7 +35,7 @@ namespace Ziusudra.Desktop.ViewModel
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(PauseCommand))]
         [NotifyCanExecuteChangedFor(nameof(ResumeCommand))]
-        [NotifyCanExecuteChangedFor(nameof(RemoveCommand))]
+        [NotifyPropertyChangedFor(nameof(CanRemove))]
         private TorrentRow? _SelectedTorrent;
 
         /// <summary>The message from the last command, shown to the user; empty when it succeeded.</summary>
@@ -97,15 +97,16 @@ namespace Ziusudra.Desktop.ViewModel
 
         private bool CanResume() => CanCommand(ResumeTorrentsRequest.MethodName);
 
-        /// <summary>Removes the selected torrent, leaving its downloaded data on disk.</summary>
-        [RelayCommand(CanExecute = nameof(CanRemove))]
-        private Task RemoveAsync()
+        /// <summary>Gets a value indicating whether the selected torrent can be removed from the connected daemon.</summary>
+        public bool CanRemove => CanCommand(RemoveTorrentRequest.MethodName);
+
+        /// <summary>Removes the selected torrent. Whether to also delete its data is the caller's choice, gathered by the view.</summary>
+        /// <param name="removeData">Whether to delete the torrent's downloaded data from disk.</param>
+        public Task RemoveSelectedAsync(bool removeData)
         {
             TorrentRow? selected = SelectedTorrent;
-            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.RemoveAsync(selected.Hash, removeData: false));
+            return selected is null ? Task.CompletedTask : RunAsync(() => _Session.RemoveAsync(selected.Hash, removeData));
         }
-
-        private bool CanRemove() => CanCommand(RemoveTorrentRequest.MethodName);
 
         private bool CanCommand(string method)
         {
@@ -138,8 +139,8 @@ namespace Ziusudra.Desktop.ViewModel
 
             PauseCommand.NotifyCanExecuteChanged();
             ResumeCommand.NotifyCanExecuteChanged();
-            RemoveCommand.NotifyCanExecuteChanged();
             AddMagnetCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(CanRemove));
             OnPropertyChanged(nameof(CanAddFile));
         }
 
