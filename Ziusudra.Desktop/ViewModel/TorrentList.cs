@@ -62,8 +62,11 @@ namespace Ziusudra.Desktop.ViewModel
         /// <summary>Gets a value indicating whether a torrent file can be added to the connected daemon.</summary>
         public bool CanAddFile => _Session.State == SessionState.Connected && _Session.Supports(AddTorrentFileRequest.MethodName);
 
+        /// <summary>Gets a value indicating whether a magnet link can be added to the connected daemon.</summary>
+        public bool CanAddMagnet => _Session.State == SessionState.Connected && _Session.Supports(AddTorrentMagnetRequest.MethodName);
+
         /// <summary>Adds the torrent at <see cref="NewMagnet" /> from its magnet link.</summary>
-        [RelayCommand(CanExecute = nameof(CanAddMagnet))]
+        [RelayCommand(CanExecute = nameof(CanSubmitMagnet))]
         private Task AddMagnetAsync()
         {
             string magnet = NewMagnet;
@@ -76,9 +79,19 @@ namespace Ziusudra.Desktop.ViewModel
             });
         }
 
-        private bool CanAddMagnet()
+        private bool CanSubmitMagnet()
         {
-            return !string.IsNullOrWhiteSpace(NewMagnet) && _Session.State == SessionState.Connected && _Session.Supports(AddTorrentMagnetRequest.MethodName);
+            return !string.IsNullOrWhiteSpace(NewMagnet) && CanAddMagnet;
+        }
+
+        /// <summary>Adds a torrent from a magnet link. Prompting for the link is the view's concern, mirroring <see cref="AddFileAsync" />.</summary>
+        /// <param name="magnetUri">The magnet link.</param>
+        public Task AddMagnetLinkAsync(string magnetUri)
+        {
+            if (string.IsNullOrWhiteSpace(magnetUri))
+                return Task.CompletedTask;
+
+            return RunAsync(() => _Session.AddMagnetAsync(magnetUri));
         }
 
         /// <summary>Adds a torrent from the contents of a picked torrent file. The picking itself is the view's concern.</summary>
@@ -163,6 +176,7 @@ namespace Ziusudra.Desktop.ViewModel
             AddMagnetCommand.NotifyCanExecuteChanged();
             OnPropertyChanged(nameof(CanRemove));
             OnPropertyChanged(nameof(CanAddFile));
+            OnPropertyChanged(nameof(CanAddMagnet));
         }
 
         private void Attach(TorrentMonitor? monitor)

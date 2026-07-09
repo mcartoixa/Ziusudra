@@ -115,6 +115,49 @@ namespace Ziusudra.Desktop
             await _Torrents.RemoveSelectedAsync(deleteData.IsChecked == true);
         }
 
+        private async void OnAddMagnetClick(object sender, RoutedEventArgs e)
+        {
+            var input = new TextBox { PlaceholderText = "magnet:?xt=…" };
+            var dialog = new ContentDialog
+            {
+                Title = "Add magnet link",
+                Content = input,
+                PrimaryButtonText = "Add",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = Content.XamlRoot,
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
+            await _Torrents.AddMagnetLinkAsync(input.Text);
+        }
+
+        private async void OnAboutClick(object sender, RoutedEventArgs e)
+        {
+            Version? version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var dialog = new ContentDialog
+            {
+                Title = "About Ziusudra",
+                Content = new TextBlock
+                {
+                    Text = $"Ziusudra\nA Windows client for Deluge.\n\nVersion {version}",
+                    TextWrapping = TextWrapping.WrapWholeWords,
+                },
+                CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = Content.XamlRoot,
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        private void OnExitClick(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Exit();
+        }
+
         private readonly ViewModel.ConnectionManager _ViewModel;
         private readonly ViewModel.TorrentList _Torrents;
     }
