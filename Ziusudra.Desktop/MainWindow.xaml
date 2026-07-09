@@ -78,8 +78,17 @@
             <ListView Grid.Row="2" ItemsSource="{Binding Torrents}"
                       SelectionMode="Extended"
                       SelectionChanged="OnTorrentSelectionChanged"
+                      RightTapped="OnTorrentRightTapped"
                       BorderThickness="1"
                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                <ListView.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="Pause" Command="{Binding PauseCommand}" />
+                        <MenuFlyoutItem Text="Resume" Command="{Binding ResumeCommand}" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem Text="Remove…" Click="OnRemoveClick" IsEnabled="{Binding CanRemove}" />
+                    </MenuFlyout>
+                </ListView.ContextFlyout>
                 <ListView.HeaderTemplate>
                     <DataTemplate>
                         <TextBlock Text="Torrents" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,8" />

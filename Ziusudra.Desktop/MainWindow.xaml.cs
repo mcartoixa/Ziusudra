@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
@@ -68,6 +69,15 @@ namespace Ziusudra.Desktop
         {
             var list = (ListView)sender;
             _Torrents.SetSelection(list.SelectedItems.OfType<ViewModel.TorrentRow>().ToList());
+        }
+
+        private void OnTorrentRightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            var list = (ListView)sender;
+            if ((e.OriginalSource as FrameworkElement)?.DataContext is not ViewModel.TorrentRow row || list.SelectedItems.Contains(row))
+                return;
+
+            list.SelectedItem = row;
         }
 
         private async void OnRemoveClick(object sender, RoutedEventArgs e)
