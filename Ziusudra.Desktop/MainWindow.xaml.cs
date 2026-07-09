@@ -17,12 +17,15 @@ namespace Ziusudra.Desktop
         /// <summary>Create a new instance of the <see cref="MainWindow" /> type.</summary>
         /// <param name="viewModel">The connection-manager view-model.</param>
         /// <param name="torrents">The torrent-list view-model.</param>
-        public MainWindow(ViewModel.ConnectionManager viewModel, ViewModel.TorrentList torrents)
+        /// <param name="filters">The filter-sidebar view-model.</param>
+        public MainWindow(ViewModel.ConnectionManager viewModel, ViewModel.TorrentList torrents, ViewModel.FilterSidebar filters)
         {
             ArgumentNullException.ThrowIfNull(viewModel);
             ArgumentNullException.ThrowIfNull(torrents);
+            ArgumentNullException.ThrowIfNull(filters);
             _ViewModel = viewModel;
             _Torrents = torrents;
+            _Filters = filters;
 
             InitializeComponent();
             if (Content is FrameworkElement root)
@@ -158,7 +161,14 @@ namespace Ziusudra.Desktop
             Application.Current.Exit();
         }
 
+        private async void OnFilterInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
+        {
+            if (args.InvokedItem is ViewModel.FilterNode node)
+                await _Filters.SelectAsync(node);
+        }
+
         private readonly ViewModel.ConnectionManager _ViewModel;
         private readonly ViewModel.TorrentList _Torrents;
+        private readonly ViewModel.FilterSidebar _Filters;
     }
 }

@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
@@ -219,6 +221,28 @@ namespace Ziusudra.Client.Tests
 
             Assert.Equal("newhash", id);
             Assert.Contains("core.add_torrent_file", client.SentMethods);
+        }
+
+        [Fact]
+        public async Task GetFilterTreeAsync_ShouldReturnTheCategoriesWithTheirValuesAndCounts()
+        {
+            var tree = new Hashtable {
+                ["state"] = new ArrayList {
+                    new ArrayList { "All", 3 },
+                    new ArrayList { "Downloading", 1 },
+                }
+            };
+            FakeRpcClient client = CommandClient("core.get_filter_tree", returnValue: tree);
+            await using var session = new DelugeSession(_ => client);
+            await session.ConnectAsync(Endpoint, "user", "pass");
+
+            IReadOnlyDictionary<string, IReadOnlyList<Filter>> result = await session.GetFilterTreeAsync();
+
+            IReadOnlyList<Filter> states = result["state"];
+            Assert.Equal(2, states.Count);
+            Assert.Equal(3, states.Single(f => f.Value == "All").Count);
+            Assert.Equal(1, states.Single(f => f.Value == "Downloading").Count);
+            Assert.Contains("core.get_filter_tree", client.SentMethods);
         }
 
         [Fact]

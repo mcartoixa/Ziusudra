@@ -69,7 +69,10 @@ namespace Ziusudra.DelugeRpc.Core
         }
 
         /// <summary>Gets the name of the remote method to call.</summary>
-        protected override string Method => "core.get_filter_tree";
+        protected override string Method => MethodName;
+
+        /// <summary>The name of the remote method called by this request.</summary>
+        public const string MethodName = "core.get_filter_tree";
 
         private readonly ICollection? _HiddenCategories;
         private readonly bool? _ShowZeroHits;

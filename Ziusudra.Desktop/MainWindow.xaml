@@ -2,6 +2,7 @@
     x:Class="Ziusudra.Desktop.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Ziusudra.Desktop.ViewModel"
     Title="Ziusudra">
     <Grid>
         <Grid.RowDefinitions>
@@ -76,117 +77,137 @@
                 </StackPanel>
             </Grid>
 
-            <Grid Grid.Row="1" x:Name="TorrentArea" RowSpacing="12">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <Grid Grid.Row="1" ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                    <Button Content="Pause" Command="{Binding PauseCommand}" />
-                    <Button Content="Resume" Command="{Binding ResumeCommand}" />
-                    <Button Content="Remove" Click="OnRemoveClick" IsEnabled="{Binding CanRemove}" />
-                    <TextBlock Text="{Binding CommandStatus}" VerticalAlignment="Center" Opacity="0.8" TextWrapping="Wrap" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
-                    <TextBox PlaceholderText="magnet:?xt=…"
-                             Text="{Binding NewMagnet, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             Width="360" />
-                    <Button Content="Add magnet" Command="{Binding AddMagnetCommand}" />
-                    <Button Content="Add file…" Click="OnAddFileClick" IsEnabled="{Binding CanAddFile}" />
-                </StackPanel>
-
-                <ListView Grid.Row="2" ItemsSource="{Binding Torrents}"
-                          SelectionMode="Extended"
-                          SelectionChanged="OnTorrentSelectionChanged"
-                          RightTapped="OnTorrentRightTapped"
+                <TreeView Grid.Column="0" x:Name="FilterTree"
+                          ItemsSource="{x:Bind _Filters.Categories}"
+                          ItemInvoked="OnFilterInvoked"
+                          SelectionMode="Single"
                           BorderThickness="1"
                           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
-                    <ListView.ContextFlyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem Text="Pause" Command="{Binding PauseCommand}" />
-                            <MenuFlyoutItem Text="Resume" Command="{Binding ResumeCommand}" />
-                            <MenuFlyoutSeparator />
-                            <MenuFlyoutItem Text="Remove…" Click="OnRemoveClick" IsEnabled="{Binding CanRemove}" />
-                        </MenuFlyout>
-                    </ListView.ContextFlyout>
-                    <ListView.HeaderTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="Torrents" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,8" />
+                    <TreeView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FilterNode">
+                            <TreeViewItem ItemsSource="{x:Bind Children}" Content="{x:Bind Label, Mode=OneWay}" IsExpanded="True" />
                         </DataTemplate>
-                    </ListView.HeaderTemplate>
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnSpacing="12" Padding="0,4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="120" />
-                                    <ColumnDefinition Width="140" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="100" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Grid.Column="1" Text="{Binding State}" />
-                                <ProgressBar Grid.Column="2" Value="{Binding Progress}" Maximum="1" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="3" Text="{Binding DownloadRateText}" />
-                                <TextBlock Grid.Column="4" Text="{Binding UploadRateText}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    </TreeView.ItemTemplate>
+                </TreeView>
 
-                <Pivot Grid.Row="3" Height="220" DataContext="{Binding SelectedTorrent}">
-                    <PivotItem Header="Status">
-                        <Grid ColumnSpacing="16" RowSpacing="6" Padding="4,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="State" Opacity="0.7" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding State}" />
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Progress" Opacity="0.7" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ProgressText}" />
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Download" Opacity="0.7" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DownloadRateText}" />
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Upload" Opacity="0.7" />
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding UploadRateText}" />
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="ETA" Opacity="0.7" />
-                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding EtaText}" />
-                        </Grid>
-                    </PivotItem>
-                    <PivotItem Header="Details">
-                        <Grid ColumnSpacing="16" RowSpacing="6" Padding="4,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" Opacity="0.7" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}" TextWrapping="Wrap" />
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Hash" Opacity="0.7" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Hash}" IsTextSelectionEnabled="True" />
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Size" Opacity="0.7" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SizeText}" />
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Queue" Opacity="0.7" />
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding QueueText}" />
-                        </Grid>
-                    </PivotItem>
-                </Pivot>
+                <Grid Grid.Column="1" x:Name="TorrentArea" RowSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Pause" Command="{Binding PauseCommand}" />
+                        <Button Content="Resume" Command="{Binding ResumeCommand}" />
+                        <Button Content="Remove" Click="OnRemoveClick" IsEnabled="{Binding CanRemove}" />
+                        <TextBlock Text="{Binding CommandStatus}" VerticalAlignment="Center" Opacity="0.8" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                        <TextBox PlaceholderText="magnet:?xt=…"
+                                 Text="{Binding NewMagnet, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="360" />
+                        <Button Content="Add magnet" Command="{Binding AddMagnetCommand}" />
+                        <Button Content="Add file…" Click="OnAddFileClick" IsEnabled="{Binding CanAddFile}" />
+                    </StackPanel>
+
+                    <ListView Grid.Row="2" ItemsSource="{Binding Torrents}"
+                              SelectionMode="Extended"
+                              SelectionChanged="OnTorrentSelectionChanged"
+                              RightTapped="OnTorrentRightTapped"
+                              BorderThickness="1"
+                              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                        <ListView.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Pause" Command="{Binding PauseCommand}" />
+                                <MenuFlyoutItem Text="Resume" Command="{Binding ResumeCommand}" />
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="Remove…" Click="OnRemoveClick" IsEnabled="{Binding CanRemove}" />
+                            </MenuFlyout>
+                        </ListView.ContextFlyout>
+                        <ListView.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="Torrents" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,8" />
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="12" Padding="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="{Binding State}" />
+                                    <ProgressBar Grid.Column="2" Value="{Binding Progress}" Maximum="1" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="3" Text="{Binding DownloadRateText}" />
+                                    <TextBlock Grid.Column="4" Text="{Binding UploadRateText}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Pivot Grid.Row="3" Height="220" DataContext="{Binding SelectedTorrent}">
+                        <PivotItem Header="Status">
+                            <Grid ColumnSpacing="16" RowSpacing="6" Padding="4,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="State" Opacity="0.7" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding State}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Progress" Opacity="0.7" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ProgressText}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Download" Opacity="0.7" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DownloadRateText}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Upload" Opacity="0.7" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding UploadRateText}" />
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="ETA" Opacity="0.7" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding EtaText}" />
+                            </Grid>
+                        </PivotItem>
+                        <PivotItem Header="Details">
+                            <Grid ColumnSpacing="16" RowSpacing="6" Padding="4,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" Opacity="0.7" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}" TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Hash" Opacity="0.7" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Hash}" IsTextSelectionEnabled="True" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Size" Opacity="0.7" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SizeText}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Queue" Opacity="0.7" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding QueueText}" />
+                            </Grid>
+                        </PivotItem>
+                    </Pivot>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

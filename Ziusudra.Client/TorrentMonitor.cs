@@ -72,6 +72,20 @@ namespace Ziusudra.Client
             _LoopTask ??= PollLoopAsync(_Cts.Token);
         }
 
+        /// <summary>Narrows the polled torrents to those matching <paramref name="filter" /> and reconciles the model immediately.</summary>
+        /// <remarks>The model then holds only the matching subset: torrents that fall outside the filter are raised through
+        /// <see cref="TorrentRemoved" /> and reappear through <see cref="TorrentAdded" /> when the filter widens again.</remarks>
+        /// <param name="filter">The filter to narrow by, keyed by filter category. An empty filter clears the narrowing.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        public async Task SetFilterAsync(IReadOnlyDictionary<string, string> filter, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(filter);
+            lock (_Sync)
+                _Filter = filter;
+            await RefreshAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         /// <summary>Polls the daemon once and reconciles the result into the model, raising change notifications.</summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         public async Task RefreshAsync(CancellationToken cancellationToken = default)
@@ -84,8 +98,11 @@ namespace Ziusudra.Client
                 .ConfigureAwait(false);
             try
             {
+                IReadOnlyDictionary<string, string> filter;
+                lock (_Sync)
+                    filter = _Filter;
                 GetTorrentsStatusRequest.Response response = await _Client
-                    .SendRequestAsync(new GetTorrentsStatusRequest(_StatusKeys), cancellationToken)
+                    .SendRequestAsync(new GetTorrentsStatusRequest(filter, _StatusKeys), cancellationToken)
                     .ConfigureAwait(false);
                 var incoming = response.Torrents.ToDictionary(t => t.Hash, StringComparer.Ordinal);
 
@@ -220,6 +237,7 @@ namespace Ziusudra.Client
         private readonly string[] _StatusKeys;
         private readonly TimeSpan _PollInterval;
         private readonly Dictionary<string, Torrent> _Torrents = new(StringComparer.Ordinal);
+        private IReadOnlyDictionary<string, string> _Filter = new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly object _Sync = new();
         private readonly SemaphoreSlim _RefreshGate = new(1, 1);
         private readonly CancellationTokenSource _Cts = new();

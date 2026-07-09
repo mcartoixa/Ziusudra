@@ -46,6 +46,7 @@ namespace Ziusudra.Desktop
             services.AddSingleton<ConnectionManager>();
             services.AddSingleton<ViewModel.ConnectionManager>();
             services.AddSingleton<ViewModel.TorrentList>();
+            services.AddSingleton<ViewModel.FilterSidebar>();
 
             services.AddTransient<MainWindow>();
         }

@@ -36,6 +36,7 @@ namespace Ziusudra.DelugeRpc.Core
         public GetTorrentsStatusRequest()
         {
             _Keys = new ArrayList();
+            _Filter = new ListDictionary();
         }
 
         /// <summary>Create a new instance of the <see cref="GetTorrentsStatusRequest" /> type.</summary>
@@ -43,6 +44,17 @@ namespace Ziusudra.DelugeRpc.Core
         public GetTorrentsStatusRequest(IEnumerable<string> keys)
         {
             _Keys = keys.ToArray();
+            _Filter = new ListDictionary();
+        }
+
+        /// <summary>Create a new instance of the <see cref="GetTorrentsStatusRequest" /> type restricted to a filter.</summary>
+        /// <param name="filter">The filter to narrow the torrents by, keyed by filter category (for example <c>state</c>). An empty filter returns every torrent.</param>
+        /// <param name="keys">The keys to get the status for.</param>
+        public GetTorrentsStatusRequest(IReadOnlyDictionary<string, string> filter, IEnumerable<string> keys)
+        {
+            ArgumentNullException.ThrowIfNull(filter);
+            _Keys = keys.ToArray();
+            _Filter = BuildFilter(filter);
         }
 
         /// <summary>Create the typed response to the current request from the specified server <paramref name="reply" />.</summary>
@@ -54,15 +66,24 @@ namespace Ziusudra.DelugeRpc.Core
         }
 
         /// <summary>Gets the arguments to call the <see cref="Method" /> with.</summary>
-        /// <returns>An empty collection.</returns>
+        /// <returns>The filter dictionary followed by the requested status keys.</returns>
         protected override ICollection GetArgs()
         {
-            return new object[] { new ListDictionary(), _Keys };
+            return new object[] { _Filter, _Keys };
+        }
+
+        private static IDictionary BuildFilter(IReadOnlyDictionary<string, string> filter)
+        {
+            var result = new ListDictionary();
+            foreach (KeyValuePair<string, string> pair in filter)
+                result[pair.Key] = pair.Value;
+            return result;
         }
 
         /// <summary>Gets the name of the remote method to call.</summary>
         protected override string Method => "core.get_torrents_status";
 
         private readonly ICollection _Keys;
+        private readonly IDictionary _Filter;
     }
 }

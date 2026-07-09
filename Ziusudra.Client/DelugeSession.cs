@@ -153,6 +153,29 @@ namespace Ziusudra.Client
             return response.TorrentId;
         }
 
+        /// <summary>Gets the sidebar filter tree: the filter categories the daemon exposes, each with its values and torrent counts.</summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The filters keyed by category (for example <c>state</c>, <c>tracker_host</c>, <c>owner</c>).</returns>
+        public async Task<IReadOnlyDictionary<string, IReadOnlyList<Filter>>> GetFilterTreeAsync(CancellationToken cancellationToken = default)
+        {
+            GetFilterTreeRequest.Response response = await SendCommandAsync(GetFilterTreeRequest.MethodName, new GetFilterTreeRequest(showZeroHits: true, hiddenCategories: null), cancellationToken)
+                .ConfigureAwait(false);
+            return response.Filters.ToDictionary(
+                pair => pair.Key,
+                pair => (IReadOnlyList<Filter>)pair.Value.ToArray(),
+                StringComparer.Ordinal);
+        }
+
+        /// <summary>Narrows the monitored torrents to those matching <paramref name="filter" />.</summary>
+        /// <param name="filter">The filter to narrow by, keyed by filter category. An empty filter clears the narrowing.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        public Task SetTorrentFilterAsync(IReadOnlyDictionary<string, string> filter, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(filter);
+            TorrentMonitor? monitor = _Monitor;
+            return monitor is null ? Task.CompletedTask : monitor.SetFilterAsync(filter, cancellationToken);
+        }
+
         /// <summary>Gets a value indicating whether the connected daemon supports the specified <paramref name="method" />.</summary>
         /// <param name="method">The fully-qualified RPC method name (for example <c>core.pause_torrents</c>).</param>
         /// <returns><c>true</c> when the daemon advertises the method; <c>false</c> when it does not or while disconnected.</returns>
