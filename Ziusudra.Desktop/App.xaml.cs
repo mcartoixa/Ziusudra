@@ -2,6 +2,7 @@ using System.IO;
 using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Ziusudra.Client;
@@ -21,6 +22,9 @@ namespace Ziusudra.Desktop
             InitializeComponent();
 
             HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+            builder.Logging.ClearProviders();
+            builder.Logging.SetMinimumLevel(LogLevel.Trace);
+            builder.Logging.AddDebug();
             ConfigureServices(builder.Services);
             _Host = builder.Build();
         }
@@ -35,8 +39,12 @@ namespace Ziusudra.Desktop
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            // Session layer: the production factory creates a real RpcClient for a resolved endpoint.
-            services.AddSingleton<Func<IPEndPoint, IRpcClient>>(_ => endpoint => new RpcClient(endpoint));
+            // Session layer: the production factory creates a real RpcClient for a resolved endpoint, wired to the
+            // host's logger so its protocol tracing reaches the debugger output.
+            services.AddSingleton<Func<IPEndPoint, IRpcClient>>(provider => {
+                ILogger logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger<RpcClient>();
+                return endpoint => new RpcClient(endpoint) { Logger = logger };
+            });
             services.AddSingleton<DelugeSession>();
 
             // Connection manager: persistence, host resolution, and the UI-thread marshalling seam.
