@@ -1,4 +1,6 @@
 using System.Net;
+using Ziusudra.DelugeRpc;
+using Ziusudra.DelugeRpc.Daemon;
 
 namespace Ziusudra.Client
 {
@@ -13,15 +15,18 @@ namespace Ziusudra.Client
         /// <param name="session">The session driven for the selected host.</param>
         /// <param name="store">The host-list store.</param>
         /// <param name="resolver">The host resolver.</param>
-        public ConnectionManager(DelugeSession session, IHostStore store, IHostResolver resolver)
+        /// <param name="clientFactory">Creates the transient <see cref="IRpcClient" /> used to probe a host's status.</param>
+        public ConnectionManager(DelugeSession session, IHostStore store, IHostResolver resolver, Func<IPEndPoint, IRpcClient> clientFactory)
         {
             ArgumentNullException.ThrowIfNull(session);
             ArgumentNullException.ThrowIfNull(store);
             ArgumentNullException.ThrowIfNull(resolver);
+            ArgumentNullException.ThrowIfNull(clientFactory);
 
             _Session = session;
             _Store = store;
             _Resolver = resolver;
+            _ClientFactory = clientFactory;
             _Session.StateChanged += OnSessionStateChanged;
         }
 
@@ -42,6 +47,21 @@ namespace Ziusudra.Client
         {
             ArgumentNullException.ThrowIfNull(entry);
             _Hosts.Add(entry);
+            await _Store.SaveAsync(_Hosts, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>Replaces the stored entry matching <paramref name="entry" />'s identifier and persists the change.</summary>
+        /// <param name="entry">The entry carrying the updated values.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        public async Task UpdateAsync(HostEntry entry, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(entry);
+            int index = _Hosts.FindIndex(h => h.Id == entry.Id);
+            if (index < 0)
+                return;
+
+            _Hosts[index] = entry;
             await _Store.SaveAsync(_Hosts, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -70,6 +90,8 @@ namespace Ziusudra.Client
                 .ConfigureAwait(false);
             await _Session.ConnectAsync(endpoint, entry.Username, password, cancellationToken)
                 .ConfigureAwait(false);
+            _ConnectedHostId = entry.Id;
+            HostStatusChanged?.Invoke(this, new HostStatusChangedEventArgs(entry.Id, HostStatus.Connected, _Session.Capabilities?.DaemonVersion ?? string.Empty));
         }
 
         /// <summary>Disconnects the session.</summary>
@@ -78,8 +100,60 @@ namespace Ziusudra.Client
             return _Session.DisconnectAsync();
         }
 
+        /// <summary>Probes every saved host's reachability in parallel, raising <see cref="HostStatusChanged" /> as each completes.</summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        public Task RefreshStatusAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.WhenAll(_Hosts.ToArray().Select(entry => ProbeAndRaiseAsync(entry, cancellationToken)));
+        }
+
+        private async Task ProbeAndRaiseAsync(HostEntry entry, CancellationToken cancellationToken)
+        {
+            (HostStatus status, string version) = await ProbeAsync(entry, cancellationToken)
+                .ConfigureAwait(false);
+            HostStatusChanged?.Invoke(this, new HostStatusChangedEventArgs(entry.Id, status, version));
+        }
+
+        private async Task<(HostStatus Status, string Version)> ProbeAsync(HostEntry entry, CancellationToken cancellationToken)
+        {
+            if (_Session.State == SessionState.Connected && entry.Id == _ConnectedHostId)
+                return (HostStatus.Connected, _Session.Capabilities?.DaemonVersion ?? string.Empty);
+
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(ProbeTimeout);
+            try
+            {
+                IPEndPoint endpoint = await _Resolver.ResolveAsync(entry.Host, entry.Port, timeout.Token)
+                    .ConfigureAwait(false);
+                IRpcClient client = _ClientFactory(endpoint);
+                try
+                {
+                    await client.StartAsync(timeout.Token)
+                        .ConfigureAwait(false);
+                    InfoRequest.Response info = await client.SendRequestAsync(new InfoRequest(), timeout.Token)
+                        .ConfigureAwait(false);
+                    return (HostStatus.Online, info.Version);
+                } finally
+                {
+                    await client.StopAsync()
+                        .ConfigureAwait(false);
+                }
+            } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+#pragma warning disable CA1031 // Any probe failure (unresolved, unreachable, timeout, TLS) means the host is offline.
+            catch (Exception)
+            {
+                return (HostStatus.Offline, string.Empty);
+            }
+#pragma warning restore CA1031
+        }
+
         private void OnSessionStateChanged(object? sender, EventArgs e)
         {
+            if (_Session.State is SessionState.Disconnected or SessionState.Faulted)
+                _ConnectedHostId = null;
             StateChanged?.Invoke(this, EventArgs.Empty);
         }
 
@@ -95,9 +169,16 @@ namespace Ziusudra.Client
         /// <summary>Raised after every transition of <see cref="State" />.</summary>
         public event EventHandler? StateChanged;
 
+        /// <summary>Raised as each host's status is resolved by <see cref="RefreshStatusAsync" /> or on connect.</summary>
+        public event EventHandler<HostStatusChangedEventArgs>? HostStatusChanged;
+
+        private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(4);
+
         private readonly List<HostEntry> _Hosts = new();
         private readonly IHostResolver _Resolver;
         private readonly DelugeSession _Session;
         private readonly IHostStore _Store;
+        private readonly Func<IPEndPoint, IRpcClient> _ClientFactory;
+        private Guid? _ConnectedHostId;
     }
 }

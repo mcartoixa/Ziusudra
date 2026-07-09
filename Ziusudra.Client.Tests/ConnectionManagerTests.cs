@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -50,6 +51,24 @@ namespace Ziusudra.Client.Tests
         }
 
         [Fact]
+        public async Task UpdateAsync_ShouldReplaceByIdAndPersist()
+        {
+            var entry = new HostEntry { Host = "old", Name = "Old" };
+            var store = new InMemoryHostStore(entry);
+            ConnectionManager manager = NewManager(store: store);
+            await manager.LoadAsync();
+
+            HostEntry edited = manager.Hosts.Single();
+            edited.Host = "new";
+            edited.Name = "New";
+            await manager.UpdateAsync(edited);
+
+            Assert.Equal("new", Assert.Single(manager.Hosts).Host);
+            Assert.Equal("new", Assert.Single(store.Saved).Host);
+            Assert.Equal("New", store.Saved.Single().Name);
+        }
+
+        [Fact]
         public async Task ConnectAsync_ShouldResolveThenReachConnected()
         {
             var resolver = new FakeHostResolver();
@@ -61,6 +80,54 @@ namespace Ziusudra.Client.Tests
             Assert.Equal("nas.local", resolver.LastHost);
             Assert.Equal(58846, resolver.LastPort);
             Assert.Equal("2.0.0", manager.Capabilities!.DaemonVersion);
+        }
+
+        [Fact]
+        public async Task RefreshStatusAsync_ShouldReportOnlineWithVersionForReachableHosts()
+        {
+            var store = new InMemoryHostStore(new HostEntry { Host = "a" });
+            ConnectionManager manager = NewManager(store: store);
+            await manager.LoadAsync();
+            var updates = new List<HostStatusChangedEventArgs>();
+            manager.HostStatusChanged += (_, e) => updates.Add(e);
+
+            await manager.RefreshStatusAsync();
+
+            HostStatusChangedEventArgs update = Assert.Single(updates);
+            Assert.Equal(HostStatus.Online, update.Status);
+            Assert.Equal("2.0.0", update.Version);
+        }
+
+        [Fact]
+        public async Task RefreshStatusAsync_ShouldReportConnectedForTheActiveHost()
+        {
+            var host = new HostEntry { Host = "nas.local" };
+            var store = new InMemoryHostStore(host);
+            ConnectionManager manager = NewManager(store: store);
+            await manager.LoadAsync();
+            await manager.ConnectAsync(host, "secret");
+            var updates = new List<HostStatusChangedEventArgs>();
+            manager.HostStatusChanged += (_, e) => updates.Add(e);
+
+            await manager.RefreshStatusAsync();
+
+            HostStatusChangedEventArgs update = Assert.Single(updates);
+            Assert.Equal(HostStatus.Connected, update.Status);
+            Assert.Equal("2.0.0", update.Version);
+        }
+
+        [Fact]
+        public async Task RefreshStatusAsync_ShouldReportOfflineWhenTheHostCannotBeReached()
+        {
+            var store = new InMemoryHostStore(new HostEntry { Host = "gone" });
+            ConnectionManager manager = NewManager(store: store, resolver: new FailingHostResolver());
+            await manager.LoadAsync();
+            var updates = new List<HostStatusChangedEventArgs>();
+            manager.HostStatusChanged += (_, e) => updates.Add(e);
+
+            await manager.RefreshStatusAsync();
+
+            Assert.Equal(HostStatus.Offline, Assert.Single(updates).Status);
         }
 
         [Fact]
@@ -84,7 +151,7 @@ namespace Ziusudra.Client.Tests
                 .Respond("daemon.set_event_interest", true)
                 .Respond("daemon.get_method_list", new[] { "core.get_torrents_status" });
             var session = new DelugeSession(_ => client);
-            return new ConnectionManager(session, store ?? new InMemoryHostStore(), resolver ?? new FakeHostResolver());
+            return new ConnectionManager(session, store ?? new InMemoryHostStore(), resolver ?? new FakeHostResolver(), _ => client);
         }
     }
 
@@ -125,5 +192,15 @@ namespace Ziusudra.Client.Tests
         public string? LastHost { get; private set; }
 
         public int LastPort { get; private set; }
+    }
+
+    internal sealed class FailingHostResolver:
+        IHostResolver
+    {
+
+        public Task<IPEndPoint> ResolveAsync(string host, int port, CancellationToken cancellationToken = default)
+        {
+            throw new TimeoutException();
+        }
     }
 }

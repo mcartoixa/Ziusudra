@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -5,6 +6,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using WinRT.Interop;
+using Ziusudra.Client;
 
 namespace Ziusudra.Desktop
 {
@@ -159,6 +161,53 @@ namespace Ziusudra.Desktop
         private void OnExitClick(object sender, RoutedEventArgs e)
         {
             Application.Current.Exit();
+        }
+
+        private async void OnAddHostClick(object sender, RoutedEventArgs e)
+        {
+            string defaultPort = HostEntry.DefaultPort.ToString(CultureInfo.InvariantCulture);
+            (string Name, string Host, string Port, string User)? input = await ShowHostDialogAsync("Add host", string.Empty, string.Empty, defaultPort, string.Empty);
+            if (input is { } values)
+                await _ViewModel.AddHostAsync(values.Name, values.Host, values.Port, values.User);
+        }
+
+        private async void OnEditHostClick(object sender, RoutedEventArgs e)
+        {
+            if (_ViewModel.SelectedHost is not ViewModel.HostRow row)
+                return;
+
+            string port = row.Entry.Port.ToString(CultureInfo.InvariantCulture);
+            (string Name, string Host, string Port, string User)? input = await ShowHostDialogAsync("Edit host", row.Entry.Name, row.Entry.Host, port, row.Entry.Username);
+            if (input is { } values)
+                await _ViewModel.UpdateHostAsync(row, values.Name, values.Host, values.Port, values.User);
+        }
+
+        private async Task<(string Name, string Host, string Port, string User)?> ShowHostDialogAsync(string title, string name, string host, string port, string user)
+        {
+            var nameBox = new TextBox { Header = "Name", Text = name };
+            var hostBox = new TextBox { Header = "Host", Text = host };
+            var portBox = new TextBox { Header = "Port", Text = port };
+            var userBox = new TextBox { Header = "User name", Text = user };
+            var body = new StackPanel { Spacing = 8 };
+            body.Children.Add(nameBox);
+            body.Children.Add(hostBox);
+            body.Children.Add(portBox);
+            body.Children.Add(userBox);
+
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = body,
+                PrimaryButtonText = "Save",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = Content.XamlRoot,
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return null;
+
+            return (nameBox.Text, hostBox.Text, portBox.Text, userBox.Text);
         }
 
         private async void OnFilterInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
